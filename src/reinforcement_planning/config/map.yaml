@@ -1,4 +1,4 @@
-image: /home/tim/code/ros/final_project_ws/install/reinforcement_planning/share/reinforcement_planning/config/map.pgm
+image: map.png
 mode: trinary
 resolution: 0.05
 origin: [-1.21, -2.39, 0]
