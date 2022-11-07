@@ -1,0 +1,6 @@
+build/
+venv/
+log/
+install/
+.vscode/
+.mypy_cache/
