@@ -48,7 +48,11 @@ class MapLoader(Node):
         self._lock = threading.Lock()
         while not self.client.wait_for_service(1.0):
             self.get_logger().info('service not available, waiting again...')
-        
+        self.pub = self.create_publisher(
+            OccupancyGrid,
+            'map',
+            1,
+            )
 
     async def query_map(self):
         """Query the map server for the map.
@@ -79,11 +83,7 @@ class MapLoader(Node):
 
         """
         self.get_logger().debug('Publishing map...')
-        self.pub = self.create_publisher(
-            OccupancyGrid,
-            'map',
-            1,
-            )
-        self.pub.publish(self.map)
+        with self._lock:
+            self.pub.publish(self.map)
         self.get_logger().debug('Map published.')
         
