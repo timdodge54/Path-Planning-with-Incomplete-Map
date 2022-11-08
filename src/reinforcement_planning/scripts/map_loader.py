@@ -1,12 +1,9 @@
 #! /usr/bin/env python3
-import rclpy
-import rclpy.publisher
-import rclpy.parameter
-import rclpy.callback_groups
 from rclpy.node import Node
+import rclpy
 
 from nav_msgs.msg import OccupancyGrid
-from nav2_msgs.srv import SaveMap
+from nav2_msgs.srv import LoadMap 
 
 import threading
 from ament_index_python import get_package_share_directory
@@ -31,6 +28,7 @@ class MapLoader(Node):
             map_file: The location of the yaml file.
         """
         super().__init__('map_loader')
+        self.log_level = self.get_logger().set_level(rclpy.logging.LoggingSeverity.DEBUG)
         share = get_package_share_directory('reinforcement_planning')
         file_loc = f"{share}/map.yaml"
         param = rclpy.parameter.Parameter(
@@ -40,6 +38,7 @@ class MapLoader(Node):
             )
         self.declare_parameter('map_file')
         self.file_loc: str = self.get_parameter_or('map_file', file_loc).value
+        self.get_logger().info(f"Map file: {self.file_loc} {type(self.file_loc)}")
         self.cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
         self.client = self.create_client(
             LoadMap,
@@ -57,12 +56,12 @@ class MapLoader(Node):
         self.timer1_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
         self.timer2_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
         self._map_q_timer = self.create_timer(
-            10,
+            3,
             self.query_map,
             callback_group=self.timer1_cbg,
         )
         self.publish_timer = self.create_timer(
-            12,
+            4,
             self.publish_grid,
             callback_group=self.timer2_cbg,
         )
@@ -79,28 +78,12 @@ class MapLoader(Node):
             None
 
         """
-        with open(self.file_loc, "r") as f:
-            try:
-                res = yaml.safe_load(f)
-            except yaml.YAMLError as exc:
-                self.get_logger().error(exc)
-                raise
-        self.get_logger().debug(f"Map info: {res}")
-        
-            
-        self.get_logger().debug('Requesting map...')
-        req = SaveMap.Request()
-        req.map_topic = 'map'
-        req.image_format = 'pgm'
-        req.map_url = req["image"]
-        req.map_mode = req["mode"]
-        req.free_thresh = req["free_thresh"]
-        req.occupied_thresh = req["occupied_thresh"]
-        
+        req = LoadMap.Request()
         with self._lock:
-            self.future = await self.client.call_async(req)
+            req.map_url= self.file_loc
+            res: LoadMap.Response = await self.client.call_async(req)
         self.get_logger().debug('Map received.')
-        self.map: LoadMap.Response = self.future.result().map
+        self.map: LoadMap.Response = res.map
     
     def publish_grid(self):
         """Publish the map as an OccupancyGrid.
@@ -113,7 +96,6 @@ class MapLoader(Node):
 
         """
         self.get_logger().debug('Publishing map...')
-        self.get_logger().debug(f"Map info: {self.map}")
         
         with self._lock:
             self.pub.publish(self.map)

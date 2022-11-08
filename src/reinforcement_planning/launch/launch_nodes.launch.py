@@ -9,6 +9,7 @@ import launch_ros.actions
 def generate_launch_description():
     # Parameters
     lifecycle_nodes = ['map_server']
+    map_file = get_package_share_directory('reinforcement_planning') + '/config/map.yaml'
     use_sim_time = True
     autostart = True
     save_map_timeout = 2000
@@ -38,9 +39,11 @@ def generate_launch_description():
             executable="map_loader.py",
             output="screen",
             emulate_tty=True,
+            parameters=[{'map_file': map_file}],
             )
     ld = LaunchDescription()
-
+    
+    ld.add_action(map_loader)
     ld.add_action(start_map_saver_server_cmd)
     ld.add_action(start_lifecycle_manager_cmd)
 
