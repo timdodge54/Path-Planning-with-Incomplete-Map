@@ -15,6 +15,10 @@ class MapLoader(Node):
 
     Attributes:
         file_loc: The location of the yaml file.
+        client: The client that queries the map server.
+        pub: The publisher that publishes the map as an OccupancyGrid.
+        _map_q_timer: The timer that queries the map server at given frequency.
+        _publish_timer: The timer that publishes the map at given frequency.
 
     """
 
@@ -43,14 +47,14 @@ class MapLoader(Node):
         self.file_loc: str = self.get_parameter_or('map_file', file_loc).value
         self.get_logger().debug(f"Map file: {self.file_loc} {type(self.file_loc)}")
         # Setting callback groups
-        self.cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
-        self.timer1_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
-        self.timer2_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        self._cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        self._timer1_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        self._timer2_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
         # Creating client and publisher
         self.client = self.create_client(
             LoadMap,
             '/map_server/load_map',
-            callback_group=self.cbg,
+            callback_group=self._cbg,
             )
         while not self.client.wait_for_service(1.0):
             self.get_logger().info('service not available, waiting again...')
@@ -65,12 +69,12 @@ class MapLoader(Node):
         self._map_q_timer = self.create_timer(
             3,
             self.query_map,
-            callback_group=self.timer1_cbg,
+            callback_group=self._timer1_cbg,
         )
-        self.publish_timer = self.create_timer(
+        self._publish_timer = self.create_timer(
             4,
             self.publish_grid,
-            callback_group=self.timer2_cbg,
+            callback_group=self._timer2_cbg,
         )
             
         
