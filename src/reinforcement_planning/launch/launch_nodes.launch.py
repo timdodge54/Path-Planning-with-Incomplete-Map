@@ -33,6 +33,12 @@ def generate_launch_description():
                         {'autostart': autostart},
                         {'node_names': lifecycle_nodes}])
 
+    map_loader = launch_ros.actions.Node(
+            package="reinforcement_planning",
+            executable="map_loader.py",
+            output="screen",
+            emulate_tty=True,
+            )
     ld = LaunchDescription()
 
     ld.add_action(start_map_saver_server_cmd)
