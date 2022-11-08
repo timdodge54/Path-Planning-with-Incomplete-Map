@@ -43,7 +43,7 @@
 		- Server
 			- when a server is queried it uses a callback which reponds to the query
 			- a callback is a function that is triggered by a server 
-			- the field of the call back function should be the request of the srv message
+			- the parameter field of the callback function should be the request of the srv message
 		- Client 
 			- clients can only query topics that already exist 
 			- the client will get the response and use that data
