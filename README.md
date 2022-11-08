@@ -8,7 +8,7 @@
   - takes in map at some frequency
 
 # Installation Instructions
-- [ ] install ros2 foxy
+- [ ] install [ros2 foxy](https://docs.ros.org/en/foxy/Installation.html)
 - [ ] run the following command from root of ws `rosdep install --from-paths src -y --ignore-src`
 - [ ] install catkin_pkg `pip install catkin_pkg`
 - [ ] source ros2 `source ros2`
