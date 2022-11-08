@@ -28,7 +28,9 @@ class MapLoader(Node):
             map_file: The location of the yaml file.
         """
         super().__init__('map_loader')
+        # setting log level
         self.log_level = self.get_logger().set_level(rclpy.logging.LoggingSeverity.DEBUG)
+        # setting default values for parameters
         share = get_package_share_directory('reinforcement_planning')
         file_loc = f"{share}/map.yaml"
         param = rclpy.parameter.Parameter(
@@ -36,16 +38,20 @@ class MapLoader(Node):
             rclpy.Parameter.Type.STRING,
             file_loc
             )
+        # deeclaae and get parameter
         self.declare_parameter('map_file')
         self.file_loc: str = self.get_parameter_or('map_file', file_loc).value
-        self.get_logger().info(f"Map file: {self.file_loc} {type(self.file_loc)}")
+        self.get_logger().debug(f"Map file: {self.file_loc} {type(self.file_loc)}")
+        # Setting callback groups
         self.cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        self.timer1_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        self.timer2_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        # Creating client and publisher
         self.client = self.create_client(
             LoadMap,
             '/map_server/load_map',
             callback_group=self.cbg,
             )
-        self._lock = threading.Lock()
         while not self.client.wait_for_service(1.0):
             self.get_logger().info('service not available, waiting again...')
         self.pub = self.create_publisher(
@@ -53,8 +59,9 @@ class MapLoader(Node):
             'map',
             1,
         )
-        self.timer1_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
-        self.timer2_cbg = rclpy.callback_groups.MutuallyExclusiveCallbackGroup()
+        # creating multi-threading lock
+        self._lock = threading.Lock()
+        # creating timers
         self._map_q_timer = self.create_timer(
             3,
             self.query_map,
@@ -78,12 +85,15 @@ class MapLoader(Node):
             None
 
         """
+        # Create request
         req = LoadMap.Request()
+        # Lock map data so publishing thread can't access it
         with self._lock:
             req.map_url= self.file_loc
             res: LoadMap.Response = await self.client.call_async(req)
+            # save map data
+            self.map: LoadMap.Response = res.map
         self.get_logger().debug('Map received.')
-        self.map: LoadMap.Response = res.map
     
     def publish_grid(self):
         """Publish the map as an OccupancyGrid.
@@ -96,7 +106,7 @@ class MapLoader(Node):
 
         """
         self.get_logger().debug('Publishing map...')
-        
+       # Lock map data so query thread can't access it 
         with self._lock:
             self.pub.publish(self.map)
         self.get_logger().debug('Map published.')
