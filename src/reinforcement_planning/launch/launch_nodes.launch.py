@@ -16,7 +16,7 @@ def generate_launch_description():
     free_thresh_default = 0.25
     occupied_thresh_default = 0.65
 
-    # Nodes launching commands
+    # Creating Map server 
     start_map_saver_server_cmd = launch_ros.actions.Node(
             package='nav2_map_server',
             executable='map_server',
@@ -24,6 +24,7 @@ def generate_launch_description():
             emulate_tty=True,  # https://github.com/ros2/launch/issues/188
             parameters=[{'yaml_filename': get_package_share_directory('reinforcement_planning') + '/config/map.yaml'}],
     )
+    # Create lifecycle manager to manage the map server
     start_lifecycle_manager_cmd = launch_ros.actions.Node(
             package='nav2_lifecycle_manager',
             executable='lifecycle_manager',
@@ -34,6 +35,8 @@ def generate_launch_description():
                         {'autostart': autostart},
                         {'node_names': lifecycle_nodes}])
 
+    # Creating map loader that reads the map from the yaml file and publishes 
+        # it as an OccupancyGrid
     map_loader = launch_ros.actions.Node(
             package="reinforcement_planning",
             executable="map_loader.py",

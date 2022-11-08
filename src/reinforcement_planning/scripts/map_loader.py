@@ -38,7 +38,7 @@ class MapLoader(Node):
             rclpy.Parameter.Type.STRING,
             file_loc
             )
-        # deeclaae and get parameter
+        # declare and get parameter
         self.declare_parameter('map_file')
         self.file_loc: str = self.get_parameter_or('map_file', file_loc).value
         self.get_logger().debug(f"Map file: {self.file_loc} {type(self.file_loc)}")
