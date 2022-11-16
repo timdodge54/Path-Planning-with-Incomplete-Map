@@ -11,12 +11,7 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Authors: Darby Lim
-
-import os
+# See the License for the speciimport os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -25,6 +20,18 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
 TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
+
+def gen_robot_list(number_of_robots):
+
+    robots = []
+
+    for i in range(number_of_robots):
+        robot_name = "turtlbot"+str(i)
+        x_pos = float(i)
+        robots.append({'name': robot_name, 'x_pose': x_pos, 'y_pose': 0.0, 'z_pose': 0.01})
+
+
+    return robots
 
 
 def generate_launch_description():
@@ -54,3 +61,8 @@ def generate_launch_description():
             launch_arguments={'use_sim_time': use_sim_time}.items(),
         ),
     ])
+fic language governing permissions and
+# limitations under the License.
+#
+# Authors: Darby Lim
+
