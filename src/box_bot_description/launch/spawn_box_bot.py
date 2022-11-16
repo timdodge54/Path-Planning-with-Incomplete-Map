@@ -17,9 +17,11 @@ def main(args=None):
             content = content_file.read()
 
     req = SpawnEntity.Request()
-    req.name = "box_bot" + str(numpy.random.randint(0, 1000))
+    name = "box_bot" + str(numpy.random.randint(0, 1000))
+    req.name = name
     req.xml = content
-    req.robot_namespace = ""
+    req.robot_namespace = name
+
     req.reference_frame = "world"
 
     while not cli.wait_for_service(timeout_sec=1.0):
