@@ -5,12 +5,14 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, FindExecutable
 
 TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
 
 
 def generate_launch_description():
+    ld = LaunchDescription()
+    NUM_ROBOTS = 3
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
     world_file_name = 'turtlebot3_worlds/' + TURTLEBOT3_MODEL + '.model'
@@ -24,41 +26,40 @@ def generate_launch_description():
         'urdf',
         urdf_file_name)
 
-    
-    use_sim_time = True
-    list_of_robots = []
+    xml = open(urdf, 'r').read()
 
-    pub = Node(
+    xml = xml.replace('"', '\\"')
+    ld.add_action(ExecuteProcess(
+            cmd=['gazebo', '--verbose', world,
+                 '-s', 'libgazebo_ros_factory.so'],
+            output='screen'))
+    ld.add_action(ExecuteProcess(
+            cmd=[FindExecutable(name='ros2'), 'param', 'set', '/gazebo',
+                 'use_sim_time', use_sim_time],
+            output='screen'))
+
+    for i in range(NUM_ROBOTS):
+        pub = Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
-            name=f'robot_state_publisher',
-            namespace=f'turtlebot',
+            name=f'robot_state_publisher_{i}',
+            namespace=f'turtlebot{i}',
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}],
+            remappings=[('cmd_vel', f'turtlebot{i}/cmd_vel')],
             arguments=[urdf]
             )
-    list_of_robots.append(pub)
-
-    ld0 =  IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
-            ),
-            launch_arguments={'world': world}.items(),
-        )
-    print("made it 68")
-
-    ld1 = IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
-            )
-        )
-    list_of_robots.append(ld0)
-    print("made it 76")
-    list_of_robots.append(ld1)
-    print("made it 78")
-    return LaunchDescription(list_of_robots)
-        
-   
-   
+        ld.add_action(pub)
+    spawn = Node(
+        package="reinforcement_planning",
+        executable="spawn_robots.py",
+        name="spawn_robots",
+        parameters=[{'robot_count': NUM_ROBOTS}]
+    )
+    ld.add_action(spawn)
+    for entity in ld.entities:
+        print(f"{entity}")
+    return ld
+    
 
 
