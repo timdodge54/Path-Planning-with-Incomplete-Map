@@ -61,8 +61,3 @@ def generate_launch_description():
             launch_arguments={'use_sim_time': use_sim_time}.items(),
         ),
     ])
-fic language governing permissions and
-# limitations under the License.
-#
-# Authors: Darby Lim
-

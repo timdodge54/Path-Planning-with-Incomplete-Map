@@ -38,34 +38,39 @@ def generate_launch_description():
         urdf_file_name)
 
     
-    launc_arg = DeclareLaunchArgument(
-            'use_sim_time',
-            default_value='false',
-            description='Use simulation (Gazebo) clock if true'),
+    use_sim_time = True
+    list_of_robots = []
 
     for i in range(NUM_ROBOTS):
         pub = Node(
                 package='robot_state_publisher',
                 executable='robot_state_publisher',
-                name_name=f'robot_state_publisher_{i}',
-                node_namespace='turtlbot{i}',
+                name=f'robot_state_publisher_{i}',
+                namespace=f'turtlbot{i}',
                 output='screen',
                 parameters=[{'use_sim_time': use_sim_time}],
                 arguments=[urdf]
                 )
-        ld.add_action(pub)
-    ld.add_action(launc_arg)
-    ld0 = IncludeLaunchDescription(
+        list_of_robots.append(pub) 
+
+    ld0 =  IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(pkg_gazebo_ros, 'launch', 'gzserver.launch.py')
             ),
             launch_arguments={'world': world}.items(),
         )
+    print("made it 68")
 
-    ld1 = IncludeLaunchDescription(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')   
-    ld.add_action(ld0)
-    ld.add_action(ld1)
-    return ld
+    ld1 = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(pkg_gazebo_ros, 'launch', 'gzclient.launch.py')
+            )
+        )
+    list_of_robots.append(ld0)
+    print("made it 76")
+    list_of_robots.append(ld1)
+    print("made it 78")
+    return LaunchDescription(list_of_robots)
         
    
    
