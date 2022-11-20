@@ -27,6 +27,8 @@ class Reinforcement_Interface(Node):
         goal: The goal of the plan
         current_pose: The current pose of the robot
         target_frame: The frame that houses the map 
+        tf_buffer: The buffer for the tf listener 
+        tf_listener: The listener for the tf tree
         
     """
 
