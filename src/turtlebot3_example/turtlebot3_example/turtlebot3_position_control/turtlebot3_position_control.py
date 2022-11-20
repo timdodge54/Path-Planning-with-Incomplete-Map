@@ -26,7 +26,9 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from nav_msgs.msg import Odometry
 
-from turtlebot3_example.turtlebot3_position_control.turtlebot3_path import Turtlebot3Path
+from turtlebot3_example.turtlebot3_position_control.turtlebot3_path import (
+    Turtlebot3Path,
+)
 
 terminal_msg = """
 Turtlebot3 Position Control
@@ -40,9 +42,8 @@ theta: goal orientation (range: -180 ~ 180, unit: deg)
 
 
 class Turtlebot3PositionControl(Node):
-
     def __init__(self):
-        super().__init__('turtlebot3_position_control')
+        super().__init__("turtlebot3_position_control")
 
         """************************************************************
         ** Initialise variables
@@ -64,14 +65,12 @@ class Turtlebot3PositionControl(Node):
         qos = QoSProfile(depth=10)
 
         # Initialise publishers
-        self.cmd_vel_pub = self.create_publisher(Twist, 'cmd_vel', qos)
+        self.cmd_vel_pub = self.create_publisher(Twist, "cmd_vel", qos)
 
         # Initialise subscribers
         self.odom_sub = self.create_subscription(
-            Odometry,
-            'odom',
-            self.odom_callback,
-            qos)
+            Odometry, "odom", self.odom_callback, qos
+        )
 
         """************************************************************
         ** Initialise timers
@@ -83,10 +82,13 @@ class Turtlebot3PositionControl(Node):
     """*******************************************************************************
     ** Callback functions and relevant functions
     *******************************************************************************"""
+
     def odom_callback(self, msg):
         self.last_pose_x = msg.pose.pose.position.x
         self.last_pose_y = msg.pose.pose.position.y
-        _, _, self.last_pose_theta = self.euler_from_quaternion(msg.pose.pose.orientation)
+        _, _, self.last_pose_theta = self.euler_from_quaternion(
+            msg.pose.pose.orientation
+        )
 
         self.init_odom_state = True
 
@@ -109,27 +111,35 @@ class Turtlebot3PositionControl(Node):
             if self.step == 1:
                 path_theta = math.atan2(
                     self.goal_pose_y - self.last_pose_y,
-                    self.goal_pose_x - self.last_pose_x)
+                    self.goal_pose_x - self.last_pose_x,
+                )
                 angle = path_theta - self.last_pose_theta
                 angular_velocity = 0.1  # unit: rad/s
 
-                twist, self.step = Turtlebot3Path.turn(angle, angular_velocity, self.step)
+                twist, self.step = Turtlebot3Path.turn(
+                    angle, angular_velocity, self.step
+                )
 
             # Step 2: Go Straight
             elif self.step == 2:
                 distance = math.sqrt(
-                    (self.goal_pose_x - self.last_pose_x)**2 +
-                    (self.goal_pose_y - self.last_pose_y)**2)
+                    (self.goal_pose_x - self.last_pose_x) ** 2
+                    + (self.goal_pose_y - self.last_pose_y) ** 2
+                )
                 linear_velocity = 0.1  # unit: m/s
 
-                twist, self.step = Turtlebot3Path.go_straight(distance, linear_velocity, self.step)
+                twist, self.step = Turtlebot3Path.go_straight(
+                    distance, linear_velocity, self.step
+                )
 
             # Step 3: Turn
             elif self.step == 3:
                 angle = self.goal_pose_theta - self.last_pose_theta
                 angular_velocity = 0.1  # unit: rad/s
 
-                twist, self.step = Turtlebot3Path.turn(angle, angular_velocity, self.step)
+                twist, self.step = Turtlebot3Path.turn(
+                    angle, angular_velocity, self.step
+                )
 
             # Reset
             elif self.step == 4:
@@ -157,6 +167,7 @@ class Turtlebot3PositionControl(Node):
     """*******************************************************************************
     ** Below should be replaced when porting for ROS 2 Python tf_conversions is done.
     *******************************************************************************"""
+
     def euler_from_quaternion(self, quat):
         """
         Convert quaternion (w in last place) to euler roll, pitch, yaw.

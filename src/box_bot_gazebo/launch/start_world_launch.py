@@ -14,20 +14,26 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    pkg_box_bot_gazebo = get_package_share_directory('box_bot_gazebo')
+    pkg_gazebo_ros = get_package_share_directory("gazebo_ros")
+    pkg_box_bot_gazebo = get_package_share_directory("box_bot_gazebo")
 
     # Gazebo launch
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py'),
+            os.path.join(pkg_gazebo_ros, "launch", "gazebo.launch.py")
         )
-    )    
+    )
 
-    return LaunchDescription([
-        DeclareLaunchArgument(
-          'world',
-          default_value=[os.path.join(pkg_box_bot_gazebo, 'worlds', 'box_bot_empty.world'), ''],
-          description='SDF world file'),
-        gazebo
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "world",
+                default_value=[
+                    os.path.join(pkg_box_bot_gazebo, "worlds", "box_bot_empty.world"),
+                    "",
+                ],
+                description="SDF world file",
+            ),
+            gazebo,
+        ]
+    )

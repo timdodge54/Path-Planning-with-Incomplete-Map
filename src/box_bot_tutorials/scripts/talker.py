@@ -7,22 +7,19 @@ from std_msgs.msg import String
 
 
 class MinimalPublisher(Node):
-
     def __init__(self):
-        super().__init__('minimal_publisher')
+        super().__init__("minimal_publisher")
         self.dummy_obj = Dummy()
-        self.publisher_ = self.create_publisher(String, '/box_bot_talker', 10)
+        self.publisher_ = self.create_publisher(String, "/box_bot_talker", 10)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
-
 
     def timer_callback(self):
         msg = String()
         talk_text = self.dummy_obj.talk()
-        msg.data = "Dummy Said:"+str(talk_text)
+        msg.data = "Dummy Said:" + str(talk_text)
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
-
 
 
 def main(args=None):
@@ -39,5 +36,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

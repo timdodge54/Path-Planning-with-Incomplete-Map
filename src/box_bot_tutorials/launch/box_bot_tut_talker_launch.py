@@ -6,10 +6,13 @@ import launch_ros.actions
 
 def generate_launch_description():
 
-    return LaunchDescription([
-        launch_ros.actions.Node(
-            package='box_bot_tutorials',
-            executable='talker.py',
-            output='screen',
-            arguments=[]),
-    ])
+    return LaunchDescription(
+        [
+            launch_ros.actions.Node(
+                package="box_bot_tutorials",
+                executable="talker.py",
+                output="screen",
+                arguments=[],
+            )
+        ]
+    )

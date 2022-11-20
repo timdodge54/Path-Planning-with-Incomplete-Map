@@ -19,8 +19,7 @@
 from geometry_msgs.msg import Twist
 
 
-class Turtlebot3Path():
-
+class Turtlebot3Path:
     def drive_circle(radius, velocity):
         twist = Twist()
         linear_velocity = velocity  # unit: m/s
