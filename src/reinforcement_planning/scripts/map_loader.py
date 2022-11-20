@@ -1,13 +1,13 @@
 #! /usr/bin/env python3
-from rclpy.node import Node
-import rclpy
-
-from nav_msgs.msg import OccupancyGrid
-from nav2_msgs.srv import LoadMap
-
 import threading
-from ament_index_python import get_package_share_directory
+
 import yaml
+
+import rclpy
+from ament_index_python import get_package_share_directory
+from nav2_msgs.srv import LoadMap
+from nav_msgs.msg import OccupancyGrid
+from rclpy.node import Node
 
 
 class MapLoader(Node):
