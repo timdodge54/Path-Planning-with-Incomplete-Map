@@ -17,7 +17,7 @@ def generate_launch_description():
     pkg_box_bot_gazebo = get_package_share_directory('reinforcement_planning')
     pkg_box_bot_description = get_package_share_directory('box_bot_description')
 
-    # Sart World
+
     start_world = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_box_bot_gazebo, 'launch', 'launch_robots.launch.py'),
