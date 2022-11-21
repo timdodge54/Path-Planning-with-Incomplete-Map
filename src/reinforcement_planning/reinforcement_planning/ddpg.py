@@ -1,6 +1,6 @@
 import gym
 import numpy as np
-
+import torch as T
 from Agent import Agent
 
 env = gym.make("LunarLander-v2", continuous=True)
@@ -17,7 +17,7 @@ agent = Agent(
 )
 
 agent.load_models()
-
+print(T.cuda.is_available())
 np.random.seed(0)
 
 score_history = []
@@ -26,7 +26,7 @@ for i in range(1000):
     score = 0
     obs = env.reset()[0]
     while not done:
-        act = agent.choose_action(obs)
+        act   = agent.choose_action(obs)
         new_state, reward, done, info, _ = env.step(act)
         agent.remember(obs, act, reward, new_state, int(done))
         agent.learn()
