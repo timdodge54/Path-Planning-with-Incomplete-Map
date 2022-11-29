@@ -3,6 +3,9 @@ from platform import node
 from queue import PriorityQueue
 import numpy as np
 import time
+import random
+from Agent import Agent
+import torch as T
 
 import matplotlib.pyplot as plt
 
@@ -65,18 +68,8 @@ class AStarPlanner:
 
         self.nodes[start_node.x][start_node.y] = start_node
 
-        for i in range(70):
-            self.nodes[i][0] = self.Node(i, 0, 0, 0, (0, 0), True)
-        for i in range(70):
-            self.nodes[70][i] = self.Node(70, i, 0, 0, (0, 0), True)
-        for i in range(71):
-            self.nodes[i][70] = self.Node(i, 70, 0, 0, (0, 0), True)
-        for i in range(71):
-            self.nodes[0][i] = self.Node(0, i, 0, 0, (0, 0), True)
-        for i in range(50):
-            self.nodes[30][i] = self.Node(30, i, 0, 0, (0, 0), True)
-        for i in range(0, 40):
-            self.nodes[50][70 - i] = self.Node(50, 70-i, 0, 0, (0, 0), True)
+        for i in range(len(ox)):
+            self.nodes[ox[i] + 10][oy[i]+ 10] = self.Node(ox[i] + 10, oy[i] + 10, 0, 0, (0, 0), True)
 
         j = 0
         while(current.x != (gx + 10) or current.y != (gy + 10)):
@@ -147,15 +140,15 @@ class AStarPlanner:
         self.min_y = round(min(oy))
         self.max_x = round(max(ox))
         self.max_y = round(max(oy))
-        print("min_x:", self.min_x)
-        print("min_y:", self.min_y)
-        print("max_x:", self.max_x)
-        print("max_y:", self.max_y)
+        #print("min_x:", self.min_x)
+        #print("min_y:", self.min_y)
+        #print("max_x:", self.max_x)
+        #print("max_y:", self.max_y)
 
         self.x_width = round((self.max_x - self.min_x) / self.resolution)
         self.y_width = round((self.max_y - self.min_y) / self.resolution)
-        print("x_width:", self.x_width)
-        print("y_width:", self.y_width)
+        # print("x_width:", self.x_width)
+        # print("y_width:", self.y_width)
 
         # obstacle map generation
         self.obstacle_map = [[False for _ in range(self.y_width)]
@@ -186,155 +179,238 @@ class AStarPlanner:
 
 
 class Simulation:
-    def __init__(self, obstacles):
-        self.obstacles = obstacles
-    
-    def step():
-        minVal = distance(tx[-1], ty[-1], rx[0], ry[0])
-        pnt = 0
-        for i in range(1, len(rx)):
-            new = distance(tx[-1], ty[-1], rx[i], ry[i])
+    def __init__(self, robot_radius, grid_size, obstacle_count, sx, sy, gx, gy):
+        self.robot_radius = robot_radius
+        self.grid_size = grid_size
+        self.obstacle_count = obstacle_count
+        self.gx = gx
+        self.gy = gy
+        self.sx = sx
+        self.sy = sy
+        self.tx = [sx]
+        self.ty = [sy]
+        self.ix = [sx]
+        self.iy = [sy]
+        self.pnt2 = 1
+        self.theta = [math.pi / 2]
+        self.dist_tolerance = robot_radius
+        self.pnt = 0
+
+        self.getMap()
+
+    def __motion(
+        self, v_left: float, v_right: float, x: float, y: float, theta: float, dt: float
+    ):
+        """Calculate the forward kinematics of the robot"""
+        aveVel = (1 / 2) * (v_right + v_left)
+        x_Dot = -aveVel * math.sin(theta)
+        y_Dot = aveVel * math.cos(theta)
+        theta_Dot = (v_right - v_left) / self.__width
+
+        x_new = x + x_Dot * dt
+        y_new = y + y_Dot * dt
+        theta_new = theta + theta_Dot * dt
+
+        self.__updatePlots(x_new, y_new, theta_new, x_Dot, y_Dot, theta_Dot, dt)
+
+        return x_new, y_new, theta_new
+
+    def getMap(self):
+        map = np.zeros((71, 71), dtype=bool)
+
+        # set obstacle positions
+        ox, oy = [], []
+        #border 
+        for i in range(-10, 60):
+            ox.append(i)
+            oy.append(-10)
+            map[i + 10, 0] = True
+        for i in range(-10, 60):
+            ox.append(60)
+            oy.append(i)
+            map[70, i + 10] = True
+        for i in range(-10, 61):
+            ox.append(i)
+            oy.append(60)
+            map[i + 10, 70] = True
+        for i in range(-10, 61):
+            ox.append(-10)
+            oy.append(i)
+            map[0, i + 10] = True
+
+        #obstacles
+        for i in range(self.obstacle_count):
+            x = random.randint(-9, 60)
+            y = random.randint(-9, 60)
+            ox.append(x)
+            oy.append(y)
+            map[x + 10, y + 10] = True
+
+        self.ox = ox
+        self.oy = oy
+        self.map = map
+        a_star = AStarPlanner(ox, oy, self.grid_size, self.robot_radius)
+        rx, ry = a_star.planning(self.sx, self.sy, self.gx, self.gy, ox, oy)
+        rx.reverse()
+        ry.reverse()
+        self.rx = rx
+        self.ry = ry
+
+    def getPath(self):
+        # negative if left of path 
+        minVal = self.distance(self.tx[-1], self.ty[-1], self.rx[0], self.ry[0])
+        self.pnt = 0
+        for i in range(1, len(self.rx)):
+            new = self.distance(self.tx[-1], self.ty[-1], self.rx[i], self.ry[i])
             if new < minVal:
-                pnt = i
+                self.pnt = i
                 minVal = new
-        pathDistance = (rx[pnt] - tx[-1], ry[pnt] - ty[-1])
+        pathDistance = (self.rx[self.pnt] - self.tx[-1], self.ry[self.pnt] - self.ty[-1])
         print(f'path distance: {pathDistance}')
-        
-        #distance to goal along path
-        goalDistance = (gx - rx[pnt], gy - ry[pnt])
+        return pathDistance
+
+    def getGoal(self): 
+        goalDistance = self.distance(self.rx[self.pnt], self.ry[self.pnt], self.gx, self.gy)
         print(f'goal: {goalDistance}')
+        return goalDistance
 
-        #distance to obstacle 
-        obsDistance = (math.inf, math.inf)
+    def getObstacle(self):
+        obsDistance = 100
         for i in range(10):
-            if map[ix[-1] + round(i * math.cos(theta[-1])), iy[-1] + round(i * math.sin(theta[-1]))]:
-                obsDistance = (ix[-1] + round(i * math.cos(theta[-1])) - tx[-1], iy[-1] + round(i * math.sin(theta[-1])) - ty[-1])
+            if self.map[round(self.tx[-1] + i * math.cos(self.theta[-1])), round(self.ty[-1] + i * math.sin(self.theta[-1]))]:
+                obsDistance = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
                 break
-        print(obsDistance)
+        print(f'obstacle Distance: {obsDistance}')
+        return obsDistance
 
+    def getTheta(self):
         #angle difference
-        pathVector = (rx[pnt + 1] - rx[pnt], ry[pnt + 1] - ry[pnt])
-        robotVector = (math.cos(theta[-1]), math.sin(theta[-1]))
+        pathVector = (self.rx[self.pnt + 1] - self.rx[self.pnt], self.ry[self.pnt + 1] - self.ry[self.pnt])
+        robotVector = (math.cos(self.theta[-1]), math.sin(self.theta[-1]))
+        distance = self.distance(0, 0, pathVector[0], pathVector[1]) * self.distance(0, 0, robotVector[0], robotVector[1])
 
-        stuff = (pathVector[0] * robotVector[0] + pathVector[1] * robotVector[1]) / (distance(pathVector[0], pathVector[1], 0, 0) * distance(robotVector[0], robotVector[1], 0,0))
-        deltTheta = math.acos(min(stuff, 1))
+        dot = pathVector[0] * robotVector[0] + pathVector[1] * robotVector[1]
+        deltTheta = math.acos(min(dot / distance, 1))
+
+        #positive is convergent
+        #negative is divergent
+
+        left = np.matrix([[self.tx[-1] - self.rx[self.pnt]], [self.ty[-1] - self.ry[self.pnt]]])
+        matrix = np.matrix([[-robotVector[0], pathVector[0]], [-robotVector[1], pathVector[1]]])
+        try:
+            inverse = np.linalg.inv(matrix)
+            solution = inverse.matmul(left) 
+            if solution[0] < 0 or solution[1] < 0:
+                deltTheta *= -1
+        except:
+            deltTheta = 0
         print(f'Delta Theta: {deltTheta}\n')
-        theta.append(theta[-1] + deltTheta)
+        return deltTheta
+    
+    def getReward(self):
+        self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius
+    
+    def isDone(self):
+        term = False
+        if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance:
+            term = True
+        if self.distance(self.tx[-1], self.ty[-1], self.rx[self.pnt], self.ry[self.pnt]) > 5 * self.robot_radius:
+            term = True
+        if self.getObstacle() <= self.dist_tolerance:
+            term = True
+        return term
+
+    def step(self, action):
+        vLeft, vRight = action[0], action[1]
+
+        x, y, theta = self.__motion(vLeft, vRight, self.tx[-1], self.ty[-1], self.theta[-1], 0.1)
 
         ##replaced by finding the actual new point and going there
-        tx.append(rx[pnt2])
-        ty.append(ry[pnt2])
-        ix.append(rx[pnt2])
-        iy.append(ry[pnt2])
-        pnt2 += 1
+        self.tx.append(x)
+        self.ty.append(y)
+        self.theta.append(theta)
+        self.ix.append(round(x))
+        self.iy.append(round(y))
+        self.pnt2 += 1
 
-def distance(x1, y1, x2, y2):
-    return math.sqrt((x2-x1)**2 + (y2-y1)**2)
+        return np.array((self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta())), self.getReward(), self.isDone()
+
+    def print(self):
+        plt.plot(self.ox, self.oy, ".k")
+        plt.plot(self.sx, self.sy, "og")
+        plt.plot(self.gx, self.gy, "xb")
+        plt.plot(self.rx, self.ry, '-r')
+        plt.grid(True)
+        plt.axis("equal")
+        plt.plot(self.tx, self.ty, "-g")     
+        plt.show()   
+
+    def distance(self, x1, y1, x2, y2):
+        return math.sqrt((x2-x1)**2 + (y2-y1)**2)
+
+    def reset(self):
+        self.tx = [self.sx]
+        self.ty = [self.sy]
+        self.pnt2 = 1
+        self.theta = [math.pi / 2]
+        self.pnt = 0      
+        self.getMap()
+
+        return np.array((self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta()))
 
 def main():
     print(__file__ + " start!!")
-
-    # start and goal position
+            # start and goal position
     sx = 10  # [m]
     sy = 10  # [m]
     gx = 50  # [m]
     gy = 50  # [m]
     grid_size = 71  # [m]
     robot_radius = 1.0  # [m]
+    obstacle_count = 500
 
-    map = np.zeros((71, 71), dtype=bool)
+    sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
+    print("hello")
 
-    # set obstacle positions
-    ox, oy = [], []
-    for i in range(-10, 60):
-        ox.append(i)
-        oy.append(-10)
-        map[i + 10, 0] = True
-    for i in range(-10, 60):
-        ox.append(60)
-        oy.append(i)
-        map[70, i + 10] = True
-    for i in range(-10, 61):
-        ox.append(i)
-        oy.append(60)
-        map[i + 10, 70] = True
-    for i in range(-10, 61):
-        ox.append(-10)
-        oy.append(i)
-        map[0, i + 10] = True
-    for i in range(-10, 40):
-        ox.append(20)
-        oy.append(i)
-        map[20, i + 10] = True
-    for i in range(0, 40):
-        ox.append(40)
-        oy.append(60 - i)
-        map[40, 70 - i] = True
+    agent = Agent(
+    alpha=0.000025,
+    beta=0.00025,
+    input_dims=[4],
+    tau=0.001,
+    batch_size=64,
+    fc1_dims=400,
+    fc2_dims=300,
+    n_actions=2,
+    )
 
-    if show_animation:  # pragma: no cover
-        plt.plot(ox, oy, ".k")
-        plt.plot(sx, sy, "og")
-        plt.plot(gx, gy, "xb")
-        plt.grid(True)
-        plt.axis("equal")
+    print(T.cuda.is_available())
+    np.random.seed(0)
 
-    a_star = AStarPlanner(ox, oy, grid_size, robot_radius)
-    rx, ry = a_star.planning(sx, sy, gx, gy, ox, oy)
+    score_history = []
+    for i in range(1000):
+        done = False
+        score = 0
+        obs = sim.reset()
+        while not done:
+            act   = agent.choose_action(obs)
+            new_state, reward, done= sim.step(act)
+            agent.remember(obs, act, reward, new_state, int(done))
+            agent.learn()
+            score += reward
+            obs = new_state
 
-    tx = [sx]
-    ty = [sy]
-    ix = [sx]
-    iy = [sy]
-    pnt2 = 1
-    theta = [math.pi / 2]
+        score_history.append(score)
+        print(
+            "episode",
+            i,
+            "score %.2f" % score,
+            "100 game average %.2f" % np.mean(score_history[-100:]),
+        )
 
-    rx.reverse()
-    ry.reverse()
-    while(round(tx[-1]) != gx and round(ty[-1]) != gy):
-        # get min distance from center robot and closest point of path 
-        minVal = distance(tx[-1], ty[-1], rx[0], ry[0])
-        pnt = 0
-        for i in range(1, len(rx)):
-            new = distance(tx[-1], ty[-1], rx[i], ry[i])
-            if new < minVal:
-                pnt = i
-                minVal = new
-        pathDistance = (rx[pnt] - tx[-1], ry[pnt] - ty[-1])
-        print(f'path distance: {pathDistance}')
-        
-        #distance to goal along path
-        goalDistance = (gx - rx[pnt], gy - ry[pnt])
-        print(f'goal: {goalDistance}')
-
-        #distance to obstacle 
-        obsDistance = (math.inf, math.inf)
-        for i in range(10):
-            if map[ix[-1] + round(i * math.cos(theta[-1])), iy[-1] + round(i * math.sin(theta[-1]))]:
-                obsDistance = (ix[-1] + round(i * math.cos(theta[-1])) - tx[-1], iy[-1] + round(i * math.sin(theta[-1])) - ty[-1])
-                break
-        print(obsDistance)
-
-        #angle difference
-        pathVector = (rx[pnt + 1] - rx[pnt], ry[pnt + 1] - ry[pnt])
-        robotVector = (math.cos(theta[-1]), math.sin(theta[-1]))
-
-        stuff = (pathVector[0] * robotVector[0] + pathVector[1] * robotVector[1]) / (distance(pathVector[0], pathVector[1], 0, 0) * distance(robotVector[0], robotVector[1], 0,0))
-        deltTheta = math.acos(min(stuff, 1))
-        print(f'Delta Theta: {deltTheta}\n')
-        theta.append(theta[-1] + deltTheta)
-
-        ##replaced by finding the actual new point and going there
-        tx.append(rx[pnt2])
-        ty.append(ry[pnt2])
-        ix.append(rx[pnt2])
-        iy.append(ry[pnt2])
-        pnt2 += 1
+        if i % 25 == 0:
+            agent.save_models()
 
 
-    if show_animation:  # pragma: no cover
-        plt.plot(rx, ry, "-r")
-        plt.pause(0.001)
-        plt.show()
 
 
 if __name__ == '__main__':
