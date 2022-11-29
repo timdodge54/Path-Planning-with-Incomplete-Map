@@ -1,6 +1,8 @@
 import math
 from platform import node
 from queue import PriorityQueue
+
+import numpy
 import numpy as np
 import time
 import random
@@ -205,13 +207,11 @@ class Simulation:
         aveVel = (1 / 2) * (v_right + v_left)
         x_Dot = -aveVel * math.sin(theta)
         y_Dot = aveVel * math.cos(theta)
-        theta_Dot = (v_right - v_left) / self.__width
+        theta_Dot = (v_right - v_left) / (self.robot_radius*2)
 
         x_new = x + x_Dot * dt
         y_new = y + y_Dot * dt
         theta_new = theta + theta_Dot * dt
-
-        self.__updatePlots(x_new, y_new, theta_new, x_Dot, y_Dot, theta_Dot, dt)
 
         return x_new, y_new, theta_new
 
@@ -265,13 +265,13 @@ class Simulation:
             if new < minVal:
                 self.pnt = i
                 minVal = new
-        pathDistance = (self.rx[self.pnt] - self.tx[-1], self.ry[self.pnt] - self.ty[-1])
-        print(f'path distance: {pathDistance}')
+        pathDistance = numpy.sqrt((self.rx[self.pnt] - self.tx[-1])**2 + (self.ry[self.pnt] - self.ty[-1])**2)
+        # print(f'path distance: {pathDistance}')
         return pathDistance
 
     def getGoal(self): 
         goalDistance = self.distance(self.rx[self.pnt], self.ry[self.pnt], self.gx, self.gy)
-        print(f'goal: {goalDistance}')
+        # print(f'goal: {goalDistance}')
         return goalDistance
 
     def getObstacle(self):
@@ -280,7 +280,7 @@ class Simulation:
             if self.map[round(self.tx[-1] + i * math.cos(self.theta[-1])), round(self.ty[-1] + i * math.sin(self.theta[-1]))]:
                 obsDistance = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
                 break
-        print(f'obstacle Distance: {obsDistance}')
+        # print(f'obstacle Distance: {obsDistance}')
         return obsDistance
 
     def getTheta(self):
@@ -290,7 +290,7 @@ class Simulation:
         distance = self.distance(0, 0, pathVector[0], pathVector[1]) * self.distance(0, 0, robotVector[0], robotVector[1])
 
         dot = pathVector[0] * robotVector[0] + pathVector[1] * robotVector[1]
-        deltTheta = math.acos(min(dot / distance, 1))
+        deltTheta = math.acos(max(dot / distance, -1))
 
         #positive is convergent
         #negative is divergent
@@ -299,16 +299,16 @@ class Simulation:
         matrix = np.matrix([[-robotVector[0], pathVector[0]], [-robotVector[1], pathVector[1]]])
         try:
             inverse = np.linalg.inv(matrix)
-            solution = inverse.matmul(left) 
+            solution = numpy.matmul(inverse,left)
             if solution[0] < 0 or solution[1] < 0:
                 deltTheta *= -1
         except:
             deltTheta = 0
-        print(f'Delta Theta: {deltTheta}\n')
+        #print(f'Delta Theta: {deltTheta}')
         return deltTheta
     
     def getReward(self):
-        self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius
+        return self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius
     
     def isDone(self):
         term = False
@@ -333,7 +333,7 @@ class Simulation:
         self.iy.append(round(y))
         self.pnt2 += 1
 
-        return np.array((self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta())), self.getReward(), self.isDone()
+        return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta()], self.getReward(), self.isDone()
 
     def print(self):
         plt.plot(self.ox, self.oy, ".k")
@@ -356,7 +356,7 @@ class Simulation:
         self.pnt = 0      
         self.getMap()
 
-        return np.array((self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta()))
+        return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta()]
 
 def main():
     print(__file__ + " start!!")
@@ -367,7 +367,7 @@ def main():
     gy = 50  # [m]
     grid_size = 71  # [m]
     robot_radius = 1.0  # [m]
-    obstacle_count = 500
+    obstacle_count = 50
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
     print("hello")
@@ -392,8 +392,8 @@ def main():
         score = 0
         obs = sim.reset()
         while not done:
-            act   = agent.choose_action(obs)
-            new_state, reward, done= sim.step(act)
+            act = agent.choose_action(obs)
+            new_state, reward, done = sim.step(act)
             agent.remember(obs, act, reward, new_state, int(done))
             agent.learn()
             score += reward
