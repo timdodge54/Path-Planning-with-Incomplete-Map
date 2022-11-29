@@ -183,6 +183,51 @@ class AStarPlanner:
                   [1, 1, math.sqrt(2)]]
 
         return motion
+
+
+class Simulation:
+    def __init__(self, obstacles):
+        self.obstacles = obstacles
+    
+    def step():
+        minVal = distance(tx[-1], ty[-1], rx[0], ry[0])
+        pnt = 0
+        for i in range(1, len(rx)):
+            new = distance(tx[-1], ty[-1], rx[i], ry[i])
+            if new < minVal:
+                pnt = i
+                minVal = new
+        pathDistance = (rx[pnt] - tx[-1], ry[pnt] - ty[-1])
+        print(f'path distance: {pathDistance}')
+        
+        #distance to goal along path
+        goalDistance = (gx - rx[pnt], gy - ry[pnt])
+        print(f'goal: {goalDistance}')
+
+        #distance to obstacle 
+        obsDistance = (math.inf, math.inf)
+        for i in range(10):
+            if map[ix[-1] + round(i * math.cos(theta[-1])), iy[-1] + round(i * math.sin(theta[-1]))]:
+                obsDistance = (ix[-1] + round(i * math.cos(theta[-1])) - tx[-1], iy[-1] + round(i * math.sin(theta[-1])) - ty[-1])
+                break
+        print(obsDistance)
+
+        #angle difference
+        pathVector = (rx[pnt + 1] - rx[pnt], ry[pnt + 1] - ry[pnt])
+        robotVector = (math.cos(theta[-1]), math.sin(theta[-1]))
+
+        stuff = (pathVector[0] * robotVector[0] + pathVector[1] * robotVector[1]) / (distance(pathVector[0], pathVector[1], 0, 0) * distance(robotVector[0], robotVector[1], 0,0))
+        deltTheta = math.acos(min(stuff, 1))
+        print(f'Delta Theta: {deltTheta}\n')
+        theta.append(theta[-1] + deltTheta)
+
+        ##replaced by finding the actual new point and going there
+        tx.append(rx[pnt2])
+        ty.append(ry[pnt2])
+        ix.append(rx[pnt2])
+        iy.append(ry[pnt2])
+        pnt2 += 1
+
 def distance(x1, y1, x2, y2):
     return math.sqrt((x2-x1)**2 + (y2-y1)**2)
 
