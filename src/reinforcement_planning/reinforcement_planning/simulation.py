@@ -197,7 +197,7 @@ class Simulation:
         self.theta = [math.pi / 2]
         self.dist_tolerance = robot_radius
         self.pnt = 0
-
+        self.time = 0
         self.getMap()
 
     def __motion(
@@ -308,7 +308,7 @@ class Simulation:
         return deltTheta
     
     def getReward(self):
-        return self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius
+        return self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius - 2*self.time
     
     def isDone(self):
         term = False
@@ -322,8 +322,8 @@ class Simulation:
 
     def step(self, action):
         vLeft, vRight = action[0], action[1]
-
-        x, y, theta = self.__motion(vLeft, vRight, self.tx[-1], self.ty[-1], self.theta[-1], 0.1)
+        dt = 0.1
+        x, y, theta = self.__motion(vLeft, vRight, self.tx[-1], self.ty[-1], self.theta[-1], dt)
 
         ##replaced by finding the actual new point and going there
         self.tx.append(x)
@@ -332,7 +332,7 @@ class Simulation:
         self.ix.append(round(x))
         self.iy.append(round(y))
         self.pnt2 += 1
-
+        self.time += dt
         return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta()], self.getReward(), self.isDone()
 
     def print(self):
@@ -355,6 +355,7 @@ class Simulation:
         self.theta = [math.pi / 2]
         self.pnt = 0      
         self.getMap()
+        self.time = 0
 
         return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta()]
 
@@ -370,7 +371,6 @@ def main():
     obstacle_count = 50
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
-    print("hello")
 
     agent = Agent(
     alpha=0.000025,
