@@ -197,7 +197,7 @@ class Simulation:
         self.theta = [math.pi / 2]
         self.dist_tolerance = robot_radius
         self.pnt = 0
-        self.time = 0
+        self.steps = 0
         self.getMap()
 
     def __motion(
@@ -290,25 +290,26 @@ class Simulation:
         distance = self.distance(0, 0, pathVector[0], pathVector[1]) * self.distance(0, 0, robotVector[0], robotVector[1])
 
         dot = pathVector[0] * robotVector[0] + pathVector[1] * robotVector[1]
-        deltTheta = math.acos(max(dot / distance, -1))
+        det = pathVector[0] * robotVector[1] - pathVector[1] * robotVector[0]
 
         #positive is convergent
         #negative is divergent
 
-        left = np.matrix([[self.tx[-1] - self.rx[self.pnt]], [self.ty[-1] - self.ry[self.pnt]]])
-        matrix = np.matrix([[-robotVector[0], pathVector[0]], [-robotVector[1], pathVector[1]]])
-        try:
-            inverse = np.linalg.inv(matrix)
-            solution = numpy.matmul(inverse,left)
-            if solution[0] < 0 or solution[1] < 0:
-                deltTheta *= -1
-        except:
-            deltTheta = 0
+        # left = np.matrix([[self.tx[-1] - self.rx[self.pnt]], [self.ty[-1] - self.ry[self.pnt]]])
+        # matrix = np.matrix([[-robotVector[0], pathVector[0]], [-robotVector[1], pathVector[1]]])
+        # try:
+        #    inverse = np.linalg.inv(matrix)
+        #    solution = numpy.matmul(inverse,left)
+        #    if solution[0] < 0 or solution[1] < 0:
+        #        deltTheta *= -1
+        # except:
+        #    deltTheta = 0
         #print(f'Delta Theta: {deltTheta}')
-        return deltTheta
+        return math.atan2(det,dot)
     
     def getReward(self):
-        return self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius - 2*self.time
+        win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
+        return self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
@@ -332,8 +333,8 @@ class Simulation:
         self.ix.append(round(x))
         self.iy.append(round(y))
         self.pnt2 += 1
-        self.time += dt
-        return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta()], self.getReward(), self.isDone()
+        self.steps += 1
+        return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta(), theta], self.getReward(), self.isDone()
 
     def print(self):
         plt.plot(self.ox, self.oy, ".k")
@@ -355,9 +356,9 @@ class Simulation:
         self.theta = [math.pi / 2]
         self.pnt = 0      
         self.getMap()
-        self.time = 0
+        self.steps = 0
 
-        return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta()]
+        return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta(), self.theta[-1]]
 
 def main():
     print(__file__ + " start!!")
@@ -375,7 +376,7 @@ def main():
     agent = Agent(
     alpha=0.000025,
     beta=0.00025,
-    input_dims=[4],
+    input_dims=[5],
     tau=0.001,
     batch_size=64,
     fc1_dims=400,
