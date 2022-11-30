@@ -211,7 +211,8 @@ class Simulation:
 
         x_new = x + x_Dot * dt
         y_new = y + y_Dot * dt
-        theta_new = theta + theta_Dot * dt
+        theta_new = (theta + theta_Dot * dt) % 2*math.pi
+
 
         return x_new, y_new, theta_new
 
@@ -265,9 +266,9 @@ class Simulation:
             if new < minVal:
                 self.pnt = i
                 minVal = new
-        pathDistance = numpy.sqrt((self.rx[self.pnt] - self.tx[-1])**2 + (self.ry[self.pnt] - self.ty[-1])**2)
+        vector_to_path = (self.rx[self.pnt] - self.tx[-1], self.ry[self.pnt] - self.ty[-1])
         # print(f'path distance: {pathDistance}')
-        return pathDistance
+        return vector_to_path[0], vector_to_path[1]
 
     def getGoal(self): 
         goalDistance = self.distance(self.rx[self.pnt], self.ry[self.pnt], self.gx, self.gy)
@@ -308,8 +309,10 @@ class Simulation:
         return math.atan2(det,dot)
     
     def getReward(self):
+        x, y = self.getPath()
+        path_distance = numpy.sqrt(x*x + y*y)
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        return 0.1*self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius - 1 + win
+        return 0.1*self.getObstacle() - path_distance - self.getGoal() + self.getTheta() * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
@@ -334,7 +337,8 @@ class Simulation:
         self.iy.append(round(y))
         self.pnt2 += 1
         self.steps += 1
-        return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta(), theta], self.getReward(), self.isDone()
+        path_x, path_y = self.getPath()
+        return [path_x, path_y, self.getGoal(), self.getObstacle(), self.getTheta(), theta], self.getReward(), self.isDone()
 
     def print(self):
         plt.plot(self.ox, self.oy, ".k")
@@ -358,7 +362,8 @@ class Simulation:
         self.getMap()
         self.steps = 0
 
-        return [self.getPath(), self.getGoal(), self.getObstacle(), self.getTheta(), self.theta[-1]]
+        path_x, path_y = self.getPath()
+        return [path_x, path_y, self.getGoal(), self.getObstacle(), self.getTheta(), self.theta[-1]]
 
 def main():
     print(__file__ + " start!!")
@@ -376,15 +381,15 @@ def main():
     agent = Agent(
     alpha=0.000025,
     beta=0.00025,
-    input_dims=[5],
+    input_dims=[6],
     tau=0.001,
     batch_size=64,
     fc1_dims=400,
     fc2_dims=300,
     n_actions=2,
-    action_range=2
+    action_range=1
     )
-    agent.load_models()
+
     print(T.cuda.is_available())
     np.random.seed(0)
 
@@ -396,10 +401,12 @@ def main():
         while not done:
             act = agent.choose_action(obs)
             new_state, reward, done = sim.step(act)
+            print(new_state)
             agent.remember(obs, act, reward, new_state, int(done))
             agent.learn()
             score += reward
             obs = new_state
+
 
         score_history.append(score)
         print(
