@@ -271,9 +271,9 @@ class Simulation:
         return vector_to_path[0], vector_to_path[1]
 
     def getGoal(self): 
-        goalDistance = self.distance(self.rx[self.pnt], self.ry[self.pnt], self.gx, self.gy)
+        goal_vector = (self.gx - self.rx[self.pnt], self.gy - self.ry[self.pnt])
         # print(f'goal: {goalDistance}')
-        return goalDistance
+        return goal_vector
 
     def getObstacle(self):
         obsDistance = 100
@@ -310,9 +310,12 @@ class Simulation:
     
     def getReward(self):
         x, y = self.getPath()
+        gx, gy = self.getGoal()
         path_distance = numpy.sqrt(x*x + y*y)
+        goal_distance = numpy.sqrt(gx*gx + gy * gy)
+
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        return 0.1*self.getObstacle() - path_distance - self.getGoal() + self.getTheta() * self.robot_radius - 1 + win
+        return 0.1*self.getObstacle() - path_distance - goal_distance + self.getTheta() * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
@@ -338,7 +341,8 @@ class Simulation:
         self.pnt2 += 1
         self.steps += 1
         path_x, path_y = self.getPath()
-        return [path_x, path_y, self.getGoal(), self.getObstacle(), self.getTheta(), theta], self.getReward(), self.isDone()
+        g_x, g_y = self.getGoal()
+        return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(),  self.ix[-1], self.iy[-1], self.theta[-1]], self.getReward(), self.isDone()
 
     def print(self):
         plt.plot(self.ox, self.oy, ".k")
@@ -363,7 +367,8 @@ class Simulation:
         self.steps = 0
 
         path_x, path_y = self.getPath()
-        return [path_x, path_y, self.getGoal(), self.getObstacle(), self.getTheta(), self.theta[-1]]
+        g_x, g_y = self.getGoal()
+        return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
 
 def main():
     print(__file__ + " start!!")
@@ -381,7 +386,7 @@ def main():
     agent = Agent(
     alpha=0.000025,
     beta=0.00025,
-    input_dims=[6],
+    input_dims=[9],
     tau=0.001,
     batch_size=64,
     fc1_dims=400,
@@ -401,7 +406,6 @@ def main():
         while not done:
             act = agent.choose_action(obs)
             new_state, reward, done = sim.step(act)
-            print(new_state)
             agent.remember(obs, act, reward, new_state, int(done))
             agent.learn()
             score += reward
