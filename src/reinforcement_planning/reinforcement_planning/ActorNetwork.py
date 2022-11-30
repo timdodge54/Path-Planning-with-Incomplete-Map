@@ -15,6 +15,7 @@ class ActorNetwork(nn.Module):
         fc1_dims,
         fc2_dims,
         n_actions,
+        action_range,
         name,
         chkpt_dir="tmp/ddpg",
     ) -> None:
@@ -24,6 +25,7 @@ class ActorNetwork(nn.Module):
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
         self.checkpoint_dir = os.path.join(chkpt_dir, name + "_ddpg")
+        self.action_range = action_range
 
         self.fc1 = nn.Linear(*self.input_dims, fc1_dims)
         f1 = 1 / np.sqrt(self.fc1.weight.data.size()[0])
@@ -53,7 +55,7 @@ class ActorNetwork(nn.Module):
         x = self.fc2(x)
         x = self.bn2(x)
         x = F.relu(x)
-        x = T.tanh(self.mu(x))
+        x = T.tanh(self.mu(x)) * self.action_range
 
         return x
 

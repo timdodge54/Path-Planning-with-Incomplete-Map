@@ -309,7 +309,7 @@ class Simulation:
     
     def getReward(self):
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        return self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius - 1 + win
+        return 0.1*self.getObstacle() - self.getPath() - self.getGoal() + self.getTheta() * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
@@ -369,7 +369,7 @@ def main():
     gy = 50  # [m]
     grid_size = 71  # [m]
     robot_radius = 1.0  # [m]
-    obstacle_count = 50
+    obstacle_count = 25
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
 
@@ -382,8 +382,9 @@ def main():
     fc1_dims=400,
     fc2_dims=300,
     n_actions=2,
+    action_range=2
     )
-
+    agent.load_models()
     print(T.cuda.is_available())
     np.random.seed(0)
 
