@@ -382,7 +382,7 @@ class Simulation:
 
     def step(self, action):
         vLeft, vRight = action[0], action[1]
-        dt = 1/60
+        dt = .5
         x, y, theta = self.__motion(vLeft, vRight, self.tx[-1], self.ty[-1], self.theta[-1], dt)
 
         ##replaced by finding the actual new point and going there
@@ -419,12 +419,9 @@ class Simulation:
     def showPath(self):
         self.print()
         for i in range(len(self.tx)):
-            plt.clf()
-            self.print()
             self.show(self.tx[i], self.ty[i], self.theta[i])
-            plt.draw()
-            time.sleep(1)
-            plt.show()
+            plt.pause(0.005)
+        plt.show()
 
     def distance(self, x1, y1, x2, y2):
         return math.sqrt((x2-x1)**2 + (y2-y1)**2)
