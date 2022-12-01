@@ -365,7 +365,7 @@ class Simulation:
                 minVal = new
         vector_to_path = (self.rx[self.pnt] - self.tx[-1], self.ry[self.pnt] - self.ty[-1])
         # print(f'path distance: {pathDistance}')
-        return vector_to_path[0], vector_to_path[1]
+        return (vector_to_path[0], vector_to_path[1])
 
     def getGoal(self):
         goal_vector = (self.gx - self.tx[-1], self.gy - self.ty[-1])
@@ -410,7 +410,7 @@ class Simulation:
         bottom = self.map[bot_x, bot_y - 1]
         bottom_right = self.map[bot_x + 1, bot_y - 1]
 
-        return top_left or top or top_right or left or on or right or bottom_left or bottom or bottom_right
+        return on
 
 
     def getTheta(self):
@@ -436,10 +436,10 @@ class Simulation:
         #    deltTheta = 0
         #print(f'Delta Theta: {deltTheta}')
         d_theta = math.atan2(det, dot)
-        if d_theta < math.pi:
+        if d_theta <= math.pi:
             d_theta *= -1
         else:
-            d_theta -= math.pi
+            d_theta = 2*math.pi - d_theta
 
         return d_theta
     
@@ -457,11 +457,9 @@ class Simulation:
 
         win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hitting = self.isHittingObstacle()
-        hit = -300 if hitting else 0
+        hit = -1000 if hitting else 0
         theta = -3 * abs(self.getTheta())
 
-        print(hitting)
-        print((hit, path_distance, goal, theta, win))
         return hit + path_distance + goal + theta + win
     
     def isDone(self):
