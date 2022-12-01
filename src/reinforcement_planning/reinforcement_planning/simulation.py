@@ -281,64 +281,64 @@ class Simulation:
             # set obstacle positions
             ox, oy = [], []
             #border
-            for i in range(-10, 60):
+            for i in range(0, 70):
                 ox.append(i)
-                oy.append(-10)
-                map[i + 10, 0] = True
-            for i in range(-10, 60):
-                ox.append(60)
+                oy.append(0)
+                map[i, 0] = True
+            for i in range(0, 70):
+                ox.append(70)
                 oy.append(i)
-                map[70, i + 10] = True
-            for i in range(-10, 61):
+                map[70, i] = True
+            for i in range(0, 71):
                 ox.append(i)
-                oy.append(60)
-                map[i + 10, 70] = True
-            for i in range(-10, 61):
-                ox.append(-10)
+                oy.append(70)
+                map[i, 70] = True
+            for i in range(0, 71):
+                ox.append(0)
                 oy.append(i)
-                map[0, i + 10] = True
+                map[0, i] = True
 
             #obstacles
             for i in range(self.obstacle_count):
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
                 if shape == 'line':
-                    x = random.randint(self.sx + 2, 60)
-                    y = random.randint(self.sx + 2, 60)
+                    x = random.randint(self.sx + 2, 70)
+                    y = random.randint(self.sx + 2, 70)
                     ox.append(x)
                     oy.append(y)
-                    map[x + 10, y + 10] = True
+                    map[x, y] = True
                     direction = random.randint(0, 3)
                     wall_length = random.randint(4,10)
                     i = 0
                     if direction == 0: # up
-                        while y < 60 and i < wall_length:
+                        while y < 70 and i < wall_length:
                             i += 1
                             y += 1
                             ox.append(x)
                             oy.append(y)
-                            map[x + 10, y + 10] = True
+                            map[x, y] = True
                     if direction == 1: # right
-                        while x < 60 and i < wall_length:
+                        while x < 70 and i < wall_length:
                             i += 1
                             x += 1
                             ox.append(x)
                             oy.append(y)
-                            map[x + 10, y + 10] = True
+                            map[x, y] = True
                     if direction == 2: # down
-                        while y > -10 and i < wall_length:
+                        while y > 0 and i < wall_length:
                             i += 1
                             y -= 1
                             ox.append(x)
                             oy.append(y)
-                            map[x + 10, y + 10] = True
+                            map[x, y] = True
                     if direction == 3: # left
-                        while x > -10 and i < wall_length:
+                        while x > 0 and i < wall_length:
                             i += 1
                             x -= 1
                             ox.append(x)
                             oy.append(y)
-                            map[x + 10, y + 10] = True
+                            map[x, y] = True
                         
             self.ox = ox
             self.oy = oy
