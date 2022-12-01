@@ -245,6 +245,7 @@ class Simulation:
         self.dist_tolerance = robot_radius
         self.pnt = 0
         self.steps = 0
+        self.shapes = ['line']
         self.getMap()
         angle = np.linspace( 0 , 2 * np.pi , 150 )
         radius = self.robot_radius - 0.5
@@ -269,9 +270,8 @@ class Simulation:
         return x_new, y_new, theta_new
 
     def getMap(self):
-        map = np.zeros((71, 71), dtype=bool)
-
         while True:
+            map = np.zeros((71, 71), dtype=bool)
             # set obstacle positions
             ox, oy = [], []
             #border
@@ -294,12 +294,40 @@ class Simulation:
 
             #obstacles
             for i in range(self.obstacle_count):
-                x = random.randint(-9, 60)
-                y = random.randint(-9, 60)
-                ox.append(x)
-                oy.append(y)
-                map[x + 10, y + 10] = True
-
+                shape_index = random.randint(0, len(self.shapes) - 1)
+                shape = self.shapes[shape_index]
+                if shape == 'line':
+                    x = random.randint(-9, 60)
+                    y = random.randint(-9, 60)
+                    ox.append(x)
+                    oy.append(y)
+                    map[x + 10, y + 10] = True
+                    direction = random.randint(0, 3)
+                    if direction == 0: # up
+                        while y < 60:
+                            y += 1
+                            ox.append(x)
+                            oy.append(y)
+                            map[x + 10, y + 10] = True
+                    if direction == 1: # right
+                        while x < 60:
+                            x += 1
+                            ox.append(x)
+                            oy.append(y)
+                            map[x + 10, y + 10] = True
+                    if direction == 2: # down
+                        while y > -10:
+                            y -= 1
+                            ox.append(x)
+                            oy.append(y)
+                            map[x + 10, y + 10] = True
+                    if direction == 3: # left
+                        while x > -10:
+                            x -= 1
+                            ox.append(x)
+                            oy.append(y)
+                            map[x + 10, y + 10] = True
+                        
             self.ox = ox
             self.oy = oy
             self.map = map
@@ -473,59 +501,60 @@ def main():
     gy = 50  # [m]
     grid_size = 2  # [m]
     robot_radius = 1.0  # [m]
-    obstacle_count = 25
+    obstacle_count = 10
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
-
-    agent = Agent(
-    alpha=0.000025,
-    beta=0.00025,
-    input_dims=[11],
-    tau=0.001,
-    batch_size=64,
-    fc1_dims=400,
-    fc2_dims=300,
-    n_actions=2,
-    action_range=1
-    )
-    agent.load_models()
-    print(T.cuda.is_available())
-    np.random.seed(0)
-
-    score_history = []
-    for i in range(1000):
-        done = False
-        score = 0
-        obs = sim.reset()
-        while not done:
-            act = agent.choose_action(obs)
-            new_state, reward, done = sim.step(act)
-            agent.remember(obs, act, reward, new_state, int(done))
-            agent.learn()
-            score += reward
-            obs = new_state
-
-
-        score_history.append(score)
-        print(
-            "episode",
-            i,
-            "score %.2f" % score,
-            "100 game average %.2f" % np.mean(score_history[-100:]),
-        )
-
-        if i % 25 == 0:
-            agent.save_models()
-        if i % 10 == 0:
-            sim.showPath()
-
-    done = False
-    obs = sim.reset()
-    agent.eval()
-    while not done:
-        act = agent.choose_action(obs)
-        new_state, reward, done = sim.step(act)
     sim.showPath()
+
+    # agent = Agent(
+    # alpha=0.000025,
+    # beta=0.00025,
+    # input_dims=[11],
+    # tau=0.001,
+    # batch_size=64,
+    # fc1_dims=400,
+    # fc2_dims=300,
+    # n_actions=2,
+    # action_range=1
+    # )
+    # agent.load_models()
+    # print(T.cuda.is_available())
+    # np.random.seed(0)
+
+    # score_history = []
+    # for i in range(1000):
+    #     done = False
+    #     score = 0
+    #     obs = sim.reset()
+    #     while not done:
+    #         act = agent.choose_action(obs)
+    #         new_state, reward, done = sim.step(act)
+    #         agent.remember(obs, act, reward, new_state, int(done))
+    #         agent.learn()
+    #         score += reward
+    #         obs = new_state
+
+
+    #     score_history.append(score)
+    #     print(
+    #         "episode",
+    #         i,
+    #         "score %.2f" % score,
+    #         "100 game average %.2f" % np.mean(score_history[-100:]),
+    #     )
+
+    #     if i % 25 == 0:
+    #         agent.save_models()
+    #     if i % 10 == 0:
+    #         sim.showPath()
+
+    # done = False
+    # obs = sim.reset()
+    # agent.eval()
+    # while not done:
+    #     act = agent.choose_action(obs)
+    #     new_state, reward, done = sim.step(act)
+    # sim.showPath()
 
 if __name__ == '__main__':
     main()
