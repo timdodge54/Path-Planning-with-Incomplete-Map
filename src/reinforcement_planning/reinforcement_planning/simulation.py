@@ -239,10 +239,6 @@ class Simulation:
         self.gy = gy
         self.sx = sx
         self.sy = sy
-        self.tx = [sx]
-        self.ty = [sy]
-        self.ix = [sx]
-        self.iy = [sy]
         self.pnt2 = 1
         self.theta = [math.pi / 2]
         self.dist_tolerance = 3*robot_radius
@@ -250,6 +246,10 @@ class Simulation:
         self.steps = 0
         self.shapes = ['line']
         self.getMap()
+        self.tx = [sx]
+        self.ty = [sy]
+        self.ix = [sx]
+        self.iy = [sy]
         self.goal_magnitude = None
         angle = np.linspace( 0 , 2 * np.pi , 150 )
         radius = self.robot_radius - 0.5
@@ -518,12 +518,12 @@ class Simulation:
         self.sy = random.randint(1, 70)  # [m]
         self.gx = random.randint(1, 70)  # [m]
         self.gy = random.randint(1, 70)  # [m]
-        self.tx = [self.sx]
-        self.ty = [self.sy]
         self.pnt2 = 1
         self.theta = [math.pi / 2]
         self.pnt = 0      
         self.getMap()
+        self.tx = [self.sx]
+        self.ty = [self.sy]
         self.steps = 0
         self.goal_magnitude = None
 
