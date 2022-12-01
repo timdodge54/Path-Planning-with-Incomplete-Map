@@ -447,18 +447,22 @@ class Simulation:
         x, y = self.getPath()
         gx, gy = self.getGoal()
         if self.goal_magnitude != None:
-            goal = self.goal_magnitude - numpy.sqrt(gx*gx + gy * gy)
+            goal = 400 * (self.goal_magnitude - numpy.sqrt(gx*gx + gy * gy))
         else:
             goal = 0
         self.goal_magnitude = numpy.sqrt(gx * gx + gy * gy)
         obstacles = self.getObstacle()
-        path_distance = numpy.sqrt(x*x + y*y)
+        path_distance = self.robot_radius - numpy.sqrt(x*x + y*y)
 
 
-        win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        hit = -200 if self.isHittingObstacle() else 0
+        win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
+        hitting = self.isHittingObstacle()
+        hit = -300 if hitting else 0
+        theta = -3 * abs(self.getTheta())
 
-        return hit + (self.robot_radius-path_distance) + goal - 0.1 * abs(self.getTheta()) - 1 + win
+        print(hitting)
+        print((hit, path_distance, goal, theta, win))
+        return hit + path_distance + goal + theta + win
     
     def isDone(self):
         term = False
@@ -560,7 +564,6 @@ def main():
     n_actions=2,
     action_range=1
     )
-
 
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))
