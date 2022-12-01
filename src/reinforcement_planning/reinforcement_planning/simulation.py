@@ -407,74 +407,50 @@ class Simulation:
     def isHittingObstacle(self):
         bot_x = round(self.tx[-1])
         bot_y = round(self.ty[-1])
-        search_size = self.dist_tolerance
-
-        top_left = self.map[bot_x - 1, bot_y + 1]
-        top = self.map[bot_x, bot_y + 1]
-        top_right = self.map[bot_x + 1, bot_y + 1]
-
-        left = self.map[bot_x - 1, bot_y]
         on = self.map[bot_x, bot_y]
-        right = self.map[bot_x + 1, bot_y]
 
-        bottom_left = self.map[bot_x - 1, bot_y - 1]
-        bottom = self.map[bot_x, bot_y - 1]
-        bottom_right = self.map[bot_x + 1, bot_y - 1]
-
-        return top_left or top or top_right or left or on or right or bottom_left or bottom or bottom_right
+        return on
 
 
     def getTheta(self):
         #angle difference
         pathVector = (self.rx[self.pnt + 1] - self.rx[self.pnt], self.ry[self.pnt + 1] - self.ry[self.pnt])
         robotVector = (math.cos(self.theta[-1]), math.sin(self.theta[-1]))
-        distance = self.distance(0, 0, pathVector[0], pathVector[1]) * self.distance(0, 0, robotVector[0], robotVector[1])
 
         dot = pathVector[0] * robotVector[0] + pathVector[1] * robotVector[1]
         det = pathVector[0] * robotVector[1] - pathVector[1] * robotVector[0]
 
-        #positive is convergent
-        #negative is divergent
-
-        # left = np.matrix([[self.tx[-1] - self.rx[self.pnt]], [self.ty[-1] - self.ry[self.pnt]]])
-        # matrix = np.matrix([[-robotVector[0], pathVector[0]], [-robotVector[1], pathVector[1]]])
-        # try:
-        #    inverse = np.linalg.inv(matrix)
-        #    solution = numpy.matmul(inverse,left)
-        #    if solution[0] < 0 or solution[1] < 0:
-        #        deltTheta *= -1
-        # except:
-        #    deltTheta = 0
-        #print(f'Delta Theta: {deltTheta}')
 
         d_theta = math.atan2(det, dot)
-        if d_theta < math.pi:
+        if d_theta <= math.pi:
             d_theta *= -1
         else:
-            d_theta -= math.pi
+            d_theta = 2 * math.pi - d_theta
 
         return d_theta
     
     def getReward(self):
         x, y = self.getPath()
         gx, gy = self.getGoal()
+
         if self.goal_magnitude != None:
             goal = 400 * (self.goal_magnitude - numpy.sqrt(gx*gx + gy * gy))
         else:
             goal = 0
         self.goal_magnitude = numpy.sqrt(gx * gx + gy * gy)
-        obstacles = self.getObstacle()
-        path_distance = self.robot_radius - numpy.sqrt(x*x + y*y)
 
+        path_distance = numpy.sqrt(x*x + y*y)
+        off_path = (self.robot_radius - path_distance)
+        if path_distance > 5 * self.robot_radius:
+            off_path -= 400
 
         win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hitting = self.isHittingObstacle()
         hit = -300 if hitting else 0
         theta = -3 * abs(self.getTheta())
 
-        print(hitting)
-        print((hit, path_distance, goal, theta, win))
-        return hit + path_distance + goal + theta + win
+        return hit + off_path + goal + theta + win
+
     
     def isDone(self):
         term = False
