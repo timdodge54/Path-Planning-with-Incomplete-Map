@@ -276,6 +276,10 @@ class Simulation:
     def getMap(self):
 
         while True:
+            self.sx = random.randint(1, 70)  # [m]
+            self.sy = random.randint(1, 70)  # [m]
+            self.gx = random.randint(1, 70)  # [m]
+            self.gy = random.randint(1, 70)  # [m]
             map = np.zeros((71, 71), dtype=bool)
 
             # set obstacle positions
@@ -303,8 +307,11 @@ class Simulation:
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
                 if shape == 'line':
-                    x = random.randint(self.sx + 2, 70)
-                    y = random.randint(self.sx + 2, 70)
+                    while True:
+                        x = random.randint(0, 70)
+                        y = random.randint(0, 70)
+                        if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
+                            break
                     ox.append(x)
                     oy.append(y)
                     map[x, y] = True
@@ -315,30 +322,34 @@ class Simulation:
                         while y < 70 and i < wall_length:
                             i += 1
                             y += 1
-                            ox.append(x)
-                            oy.append(y)
-                            map[x, y] = True
+                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
+                                ox.append(x)
+                                oy.append(y)
+                                map[x, y] = True
                     if direction == 1: # right
                         while x < 70 and i < wall_length:
                             i += 1
                             x += 1
-                            ox.append(x)
-                            oy.append(y)
-                            map[x, y] = True
+                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
+                                ox.append(x)
+                                oy.append(y)
+                                map[x, y] = True
                     if direction == 2: # down
                         while y > 0 and i < wall_length:
                             i += 1
                             y -= 1
-                            ox.append(x)
-                            oy.append(y)
-                            map[x, y] = True
+                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
+                                ox.append(x)
+                                oy.append(y)
+                                map[x, y] = True
                     if direction == 3: # left
                         while x > 0 and i < wall_length:
                             i += 1
                             x -= 1
-                            ox.append(x)
-                            oy.append(y)
-                            map[x, y] = True
+                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
+                                ox.append(x)
+                                oy.append(y)
+                                map[x, y] = True
                         
             self.ox = ox
             self.oy = oy
@@ -365,7 +376,7 @@ class Simulation:
                 minVal = new
         vector_to_path = (self.rx[self.pnt] - self.tx[-1], self.ry[self.pnt] - self.ty[-1])
         # print(f'path distance: {pathDistance}')
-        return (vector_to_path[0], vector_to_path[1])
+        return vector_to_path[0], vector_to_path[1]
 
     def getGoal(self):
         goal_vector = (self.gx - self.tx[-1], self.gy - self.ty[-1])
@@ -410,7 +421,7 @@ class Simulation:
         bottom = self.map[bot_x, bot_y - 1]
         bottom_right = self.map[bot_x + 1, bot_y - 1]
 
-        return on
+        return top_left or top or top_right or left or on or right or bottom_left or bottom or bottom_right
 
 
     def getTheta(self):
@@ -435,11 +446,12 @@ class Simulation:
         # except:
         #    deltTheta = 0
         #print(f'Delta Theta: {deltTheta}')
+
         d_theta = math.atan2(det, dot)
-        if d_theta <= math.pi:
+        if d_theta < math.pi:
             d_theta *= -1
         else:
-            d_theta = 2*math.pi - d_theta
+            d_theta -= math.pi
 
         return d_theta
     
@@ -457,9 +469,11 @@ class Simulation:
 
         win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hitting = self.isHittingObstacle()
-        hit = -1000 if hitting else 0
+        hit = -300 if hitting else 0
         theta = -3 * abs(self.getTheta())
 
+        print(hitting)
+        print((hit, path_distance, goal, theta, win))
         return hit + path_distance + goal + theta + win
     
     def isDone(self):
@@ -524,6 +538,10 @@ class Simulation:
         return math.sqrt((x2-x1)**2 + (y2-y1)**2)
 
     def reset(self):
+        self.sx = random.randint(1, 70)  # [m]
+        self.sy = random.randint(1, 70)  # [m]
+        self.gx = random.randint(1, 70)  # [m]
+        self.gy = random.randint(1, 70)  # [m]
         self.tx = [self.sx]
         self.ty = [self.sy]
         self.pnt2 = 1
@@ -533,6 +551,7 @@ class Simulation:
         self.steps = 0
         self.goal_magnitude = None
 
+
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
         obs_1, obs_2, obs_3 = self.getObstacle()
@@ -541,15 +560,17 @@ class Simulation:
 def main():
     print(__file__ + " start!!")
             # start and goal position
-    sx = 10  # [m]
-    sy = 10  # [m]
-    gx = 50  # [m]
-    gy = 50  # [m]
+    sx = random.randint(1, 69)  # [m]
+    sy = random.randint(1, 69)  # [m]
+    gx = random.randint(1, 69)  # [m]
+    gy = random.randint(1, 69)  # [m]
     grid_size = 2  # [m]
     robot_radius = 1.0  # [m]
     obstacle_count = 10
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy) 
+    for i in range(1000):
+        sim.reset()
 
     agent = Agent(
     alpha=0.000025,
