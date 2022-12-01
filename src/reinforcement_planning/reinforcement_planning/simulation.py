@@ -364,8 +364,8 @@ class Simulation:
         # print(f'path distance: {pathDistance}')
         return vector_to_path[0], vector_to_path[1]
 
-    def getGoal(self): 
-        goal_vector = (self.gx - self.rx[self.pnt], self.gy - self.ry[self.pnt])
+    def getGoal(self):
+        goal_vector = (self.gx - self.tx[-1], self.gy - self.ty[-1])
         # print(f'goal: {goalDistance}')
         return goal_vector
 
@@ -429,7 +429,7 @@ class Simulation:
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hit = -200 if obstacles[0] <= self.dist_tolerance or obstacles[1] <= self.dist_tolerance or obstacles[2] <= self.dist_tolerance else 0
 
-        return hit + (self.robot_radius-path_distance) - goal + self.getTheta() * self.robot_radius - 1 + win
+        return hit + (self.robot_radius-path_distance) + goal + abs(self.getTheta()) * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
@@ -532,7 +532,6 @@ def main():
     action_range=1
     )
 
-
     print(T.cuda.is_available())
     np.random.seed(0)
 
@@ -544,6 +543,7 @@ def main():
         while not done:
             act = agent.choose_action(obs)
             new_state, reward, done = sim.step(act)
+            print(new_state)
             agent.remember(obs, act, reward, new_state, int(done))
             agent.learn()
             score += reward
