@@ -387,7 +387,7 @@ class Simulation:
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hit = -200 if obstacles[0] <= self.dist_tolerance or obstacles[1] <= self.dist_tolerance or obstacles[2] <= self.dist_tolerance else 0
 
-        return hit - path_distance - goal_distance + self.getTheta() * self.robot_radius - 1 + win
+        return hit + (self.robot_radius-path_distance) - goal_distance + self.getTheta() * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
@@ -488,12 +488,12 @@ def main():
     n_actions=2,
     action_range=1
     )
-
+    agent.load_models()
     print(T.cuda.is_available())
     np.random.seed(0)
 
     score_history = []
-    for i in range(200):
+    for i in range(1000):
         done = False
         score = 0
         obs = sim.reset()
@@ -516,6 +516,8 @@ def main():
 
         if i % 25 == 0:
             agent.save_models()
+        if i % 10 == 0:
+            sim.showPath()
 
     done = False
     obs = sim.reset()
