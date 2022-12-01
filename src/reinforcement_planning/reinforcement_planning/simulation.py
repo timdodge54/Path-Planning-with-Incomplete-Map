@@ -242,7 +242,7 @@ class Simulation:
         self.iy = [sy]
         self.pnt2 = 1
         self.theta = [math.pi / 2]
-        self.dist_tolerance = robot_radius
+        self.dist_tolerance = 3*robot_radius
         self.pnt = 0
         self.steps = 0
         self.shapes = ['line']
@@ -412,7 +412,13 @@ class Simulation:
         # except:
         #    deltTheta = 0
         #print(f'Delta Theta: {deltTheta}')
-        return math.atan2(det,dot)
+        d_theta = math.atan2(det, dot)
+        if d_theta < math.pi:
+            d_theta *= -1
+        else:
+            d_theta -= math.pi
+
+        return d_theta
     
     def getReward(self):
         x, y = self.getPath()
@@ -429,7 +435,7 @@ class Simulation:
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hit = -200 if obstacles[0] <= self.dist_tolerance or obstacles[1] <= self.dist_tolerance or obstacles[2] <= self.dist_tolerance else 0
 
-        return hit + (self.robot_radius-path_distance) + goal + abs(self.getTheta()) * self.robot_radius - 1 + win
+        return hit + (self.robot_radius-path_distance) + goal - abs(self.getTheta()) * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
@@ -543,7 +549,6 @@ def main():
         while not done:
             act = agent.choose_action(obs)
             new_state, reward, done = sim.step(act)
-            print(new_state)
             agent.remember(obs, act, reward, new_state, int(done))
             agent.learn()
             score += reward
@@ -560,7 +565,7 @@ def main():
 
         if i % 25 == 0:
             agent.save_models()
-        if i % 10 == 0:
+        if i % 5 == 0:
             sim.showPath()
             plt.close()
 
