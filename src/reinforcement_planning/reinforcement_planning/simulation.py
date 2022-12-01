@@ -333,13 +333,25 @@ class Simulation:
         return goal_vector
 
     def getObstacle(self):
-        obsDistance = 100
+        obsDistancefoward = 100
+        obsDistanceLeft = 100
+        obsDistanceRight = 100
         for i in range(10):
             if self.map[round(self.tx[-1] + i * math.cos(self.theta[-1])), round(self.ty[-1] + i * math.sin(self.theta[-1]))]:
-                obsDistance = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
+                obsDistanceforward = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
+                break
+        for i in range(10):
+            leftTheta = self.theta[-1] - (60 * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(leftTheta))]:
+                obsDistanceLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(leftTheta)), self.iy[-1] + round(i * math.sin(leftTheta)))
+                break
+        for i in range(10):
+            rightTheta = self.theta[-1] + (60 * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(rightTheta)), round(self.ty[-1] + i * math.sin(rightTheta))]:
+                obsDistanceRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(rightTheta)), self.iy[-1] + round(i * math.sin(rightTheta)))
                 break
         # print(f'obstacle Distance: {obsDistance}')
-        return obsDistance
+        return (obsDistanceforward, obsDistanceLeft, obsDistanceRight)
 
     def getTheta(self):
         #angle difference
@@ -399,7 +411,8 @@ class Simulation:
         self.steps += 1
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
-        return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
+        obstacles = self.getObstacle()
+        return [path_x, path_y, g_x, g_y, obstacles[0], obstacles[1], obstacles[2], self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
 
     def print(self, end=True):
         plt.plot(self.ox, self.oy, ".k")
@@ -459,46 +472,46 @@ def main():
         sim.step([0.5,0.5])
     sim.showPath()
 
-    agent = Agent(
-    alpha=0.000025,
-    beta=0.00025,
-    input_dims=[9],
-    tau=0.001,
-    batch_size=64,
-    fc1_dims=400,
-    fc2_dims=300,
-    n_actions=2,
-    action_range=1
-    )
+    # agent = Agent(
+    # alpha=0.000025,
+    # beta=0.00025,
+    # input_dims=[9],
+    # tau=0.001,
+    # batch_size=64,
+    # fc1_dims=400,
+    # fc2_dims=300,
+    # n_actions=2,
+    # action_range=1
+    # )
 
-    agent.load_models()
-    print(T.cuda.is_available())
-    np.random.seed(0)
+    # agent.load_models()
+    # print(T.cuda.is_available())
+    # np.random.seed(0)
 
-    score_history = []
-    for i in range(1000):
-        done = False
-        score = 0
-        obs = sim.reset()
-        while not done:
-            act = agent.choose_action(obs)
-            new_state, reward, done = sim.step(act)
-            agent.remember(obs, act, reward, new_state, int(done))
-            agent.learn()
-            score += reward
-            obs = new_state
+    # score_history = []
+    # for i in range(1000):
+    #     done = False
+    #     score = 0
+    #     obs = sim.reset()
+    #     while not done:
+    #         act = agent.choose_action(obs)
+    #         new_state, reward, done = sim.step(act)
+    #         agent.remember(obs, act, reward, new_state, int(done))
+    #         agent.learn()
+    #         score += reward
+    #         obs = new_state
 
 
-        score_history.append(score)
-        print(
-            "episode",
-            i,
-            "score %.2f" % score,
-            "100 game average %.2f" % np.mean(score_history[-100:]),
-        )
+    #     score_history.append(score)
+    #     print(
+    #         "episode",
+    #         i,
+    #         "score %.2f" % score,
+    #         "100 game average %.2f" % np.mean(score_history[-100:]),
+    #     )
 
-        if i % 25 == 0:
-            agent.save_models()
+    #     if i % 25 == 0:
+    #         agent.save_models()
 
 
 
