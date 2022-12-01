@@ -105,8 +105,11 @@ class AStarPlanner:
         rx = [goal_node.x - 10]
         ry = [goal_node.y - 10]
         parent_index = goal_node.parent_index
+        startTime = time.time()
         while parent_index != (-1, -1):
             n = self.nodes[int(parent_index[0])][int(parent_index[1])]
+            if n is None:
+                return None, None
             rx.append(n.x - 10)
             ry.append(n.y - 10)
             parent_index = n.parent_index
@@ -214,10 +217,9 @@ class Simulation:
         x_Dot = -aveVel * math.sin(theta - math.pi / 2)
         y_Dot = aveVel * math.cos(theta - math.pi / 2)
         theta_Dot = (v_right - v_left) / (self.robot_radius*2)
-
         x_new = x + x_Dot * dt
         y_new = y + y_Dot * dt
-        theta_new = (theta + theta_Dot * dt) % 2*math.pi
+        theta_new = (theta + theta_Dot * dt) % (2*math.pi)
 
 
         return x_new, y_new, theta_new
@@ -256,8 +258,11 @@ class Simulation:
         self.ox = ox
         self.oy = oy
         self.map = map
-        a_star = AStarPlanner(ox, oy, self.grid_size, self.robot_radius)
-        rx, ry = a_star.planning(self.sx, self.sy, self.gx, self.gy, ox, oy)
+        while True:
+            a_star = AStarPlanner(ox, oy, self.grid_size, self.robot_radius)
+            rx, ry = a_star.planning(self.sx, self.sy, self.gx, self.gy, ox, oy)
+            if rx != None:
+                break
         rx.reverse()
         ry.reverse()
         self.rx = rx
@@ -335,7 +340,7 @@ class Simulation:
 
     def step(self, action):
         vLeft, vRight = action[0], action[1]
-        dt = 1
+        dt = 1/60
         x, y, theta = self.__motion(vLeft, vRight, self.tx[-1], self.ty[-1], self.theta[-1], dt)
 
         ##replaced by finding the actual new point and going there
@@ -348,7 +353,7 @@ class Simulation:
         self.steps += 1
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
-        return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(),  self.ix[-1], self.iy[-1], self.theta[-1]], self.getReward(), self.isDone()
+        return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
 
     def print(self, end=True):
         plt.plot(self.ox, self.oy, ".k")
@@ -393,7 +398,7 @@ class Simulation:
 
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
-        return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
+        return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(), self.tx[-1], self.ty[-1], self.theta[-1]]
 
 def main():
     print(__file__ + " start!!")
@@ -407,9 +412,6 @@ def main():
     obstacle_count = 25
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
-    for i in range(10):
-        sim.step([0.5,0.5])
-    sim.showPath()
 
     agent = Agent(
     alpha=0.000025,
@@ -422,7 +424,7 @@ def main():
     n_actions=2,
     action_range=1
     )
-    agent.load_models()
+
     print(T.cuda.is_available())
     np.random.seed(0)
 
