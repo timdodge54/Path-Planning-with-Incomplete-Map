@@ -358,7 +358,7 @@ class Simulation:
         # negative if left of path 
         minVal = self.distance(self.tx[-1], self.ty[-1], self.rx[0], self.ry[0])
         self.pnt = 0
-        for i in range(1, len(self.rx)):
+        for i in range(1, len(self.rx) - 1):
             new = self.distance(self.tx[-1], self.ty[-1], self.rx[i], self.ry[i])
             if new < minVal:
                 self.pnt = i
