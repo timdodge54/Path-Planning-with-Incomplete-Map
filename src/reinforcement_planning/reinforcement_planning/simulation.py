@@ -333,7 +333,7 @@ class Simulation:
         return goal_vector
 
     def getObstacle(self):
-        obsDistancefoward = 100
+        obsDistanceforward = 100
         obsDistanceLeft = 100
         obsDistanceRight = 100
         for i in range(10):
@@ -384,7 +384,8 @@ class Simulation:
         goal_distance = numpy.sqrt(gx*gx + gy * gy)
 
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        return 0.1*self.getObstacle() - path_distance - goal_distance + self.getTheta() * self.robot_radius - 1 + win
+        obstacles = self.getObstacle()
+        return 0.1*obstacles[0] - path_distance - goal_distance + self.getTheta() * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
@@ -392,7 +393,8 @@ class Simulation:
             term = True
         if self.distance(self.tx[-1], self.ty[-1], self.rx[self.pnt], self.ry[self.pnt]) > 5 * self.robot_radius:
             term = True
-        if self.getObstacle() <= self.dist_tolerance:
+        obstacles = self.getObstacle()
+        if obstacles[0] <= self.dist_tolerance or obstacles[1] <= self.dist_tolerance or obstacles[2] <= self.dist_tolerance:
             term = True
         return term
 
@@ -437,7 +439,7 @@ class Simulation:
         self.print()
         for i in range(len(self.tx)):
             self.show(self.tx[i], self.ty[i], self.theta[i])
-            plt.pause(0.005)
+            plt.pause(0.5)
         plt.show()
 
     def distance(self, x1, y1, x2, y2):
