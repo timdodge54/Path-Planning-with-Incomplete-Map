@@ -380,27 +380,32 @@ class Simulation:
     def getReward(self):
         x, y = self.getPath()
         gx, gy = self.getGoal()
+        obstacles = self.getObstacle()
         path_distance = numpy.sqrt(x*x + y*y)
         goal_distance = numpy.sqrt(gx*gx + gy * gy)
 
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        obstacles = self.getObstacle()
-        return 0.1*obstacles[0] - path_distance - goal_distance + self.getTheta() * self.robot_radius - 1 + win
+        hit = -200 if obstacles[0] <= self.dist_tolerance or obstacles[1] <= self.dist_tolerance or obstacles[2] <= self.dist_tolerance else 0
+
+        return hit - path_distance - goal_distance + self.getTheta() * self.robot_radius - 1 + win
     
     def isDone(self):
         term = False
         if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance:
+            print("Made it to goal")
             term = True
         if self.distance(self.tx[-1], self.ty[-1], self.rx[self.pnt], self.ry[self.pnt]) > 5 * self.robot_radius:
             term = True
+            print("Went too far from path")
         obstacles = self.getObstacle()
         if obstacles[0] <= self.dist_tolerance or obstacles[1] <= self.dist_tolerance or obstacles[2] <= self.dist_tolerance:
             term = True
+            print("Hit an obstacle")
         return term
 
     def step(self, action):
         vLeft, vRight = action[0], action[1]
-        dt = .5
+        dt = .1
         x, y, theta = self.__motion(vLeft, vRight, self.tx[-1], self.ty[-1], self.theta[-1], dt)
 
         ##replaced by finding the actual new point and going there
@@ -439,8 +444,8 @@ class Simulation:
         self.print()
         for i in range(len(self.tx)):
             self.show(self.tx[i], self.ty[i], self.theta[i])
-            plt.pause(0.5)
-        plt.show()
+            plt.pause(0.05)
+
 
     def distance(self, x1, y1, x2, y2):
         return math.sqrt((x2-x1)**2 + (y2-y1)**2)
@@ -456,7 +461,8 @@ class Simulation:
 
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
-        return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
+        obs_1, obs_2, obs_3 = self.getObstacle()
+        return [path_x, path_y, g_x, g_y, obs_1, obs_2, obs_3, self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
 
 def main():
     print(__file__ + " start!!")
@@ -470,53 +476,54 @@ def main():
     obstacle_count = 25
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
-    for i in range(10):
-        sim.step([0.5,0.5])
+
+    agent = Agent(
+    alpha=0.000025,
+    beta=0.00025,
+    input_dims=[11],
+    tau=0.001,
+    batch_size=64,
+    fc1_dims=400,
+    fc2_dims=300,
+    n_actions=2,
+    action_range=1
+    )
+
+    print(T.cuda.is_available())
+    np.random.seed(0)
+
+    score_history = []
+    for i in range(200):
+        done = False
+        score = 0
+        obs = sim.reset()
+        while not done:
+            act = agent.choose_action(obs)
+            new_state, reward, done = sim.step(act)
+            agent.remember(obs, act, reward, new_state, int(done))
+            agent.learn()
+            score += reward
+            obs = new_state
+
+
+        score_history.append(score)
+        print(
+            "episode",
+            i,
+            "score %.2f" % score,
+            "100 game average %.2f" % np.mean(score_history[-100:]),
+        )
+
+        if i % 25 == 0:
+            agent.save_models()
+
+    done = False
+    obs = sim.reset()
+    agent.eval()
+    while not done:
+        act = agent.choose_action(obs)
+        new_state, reward, done = sim.step(act)
     sim.showPath()
-
-    # agent = Agent(
-    # alpha=0.000025,
-    # beta=0.00025,
-    # input_dims=[9],
-    # tau=0.001,
-    # batch_size=64,
-    # fc1_dims=400,
-    # fc2_dims=300,
-    # n_actions=2,
-    # action_range=1
-    # )
-
-    # agent.load_models()
-    # print(T.cuda.is_available())
-    # np.random.seed(0)
-
-    # score_history = []
-    # for i in range(1000):
-    #     done = False
-    #     score = 0
-    #     obs = sim.reset()
-    #     while not done:
-    #         act = agent.choose_action(obs)
-    #         new_state, reward, done = sim.step(act)
-    #         agent.remember(obs, act, reward, new_state, int(done))
-    #         agent.learn()
-    #         score += reward
-    #         obs = new_state
-
-
-    #     score_history.append(score)
-    #     print(
-    #         "episode",
-    #         i,
-    #         "score %.2f" % score,
-    #         "100 game average %.2f" % np.mean(score_history[-100:]),
-    #     )
-
-    #     if i % 25 == 0:
-    #         agent.save_models()
-
-
-
 
 if __name__ == '__main__':
     main()
