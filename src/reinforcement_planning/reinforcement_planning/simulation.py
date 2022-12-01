@@ -524,6 +524,8 @@ class Simulation:
         self.getMap()
         self.tx = [self.sx]
         self.ty = [self.sy]
+        self.ix = [self.sx]
+        self.iy = [self.sy]
         self.steps = 0
         self.goal_magnitude = None
 
