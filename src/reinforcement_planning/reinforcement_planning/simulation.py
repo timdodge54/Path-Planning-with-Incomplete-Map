@@ -93,7 +93,6 @@ class AStarPlanner:
             #         plt.pause(0.001)
 
             if current.x == goal_node.x and current.y == goal_node.y:
-                print("Find goal")
                 goal_node.parent_index = current.parent_index
                 goal_node.cost = current.cost
                 break
@@ -272,39 +271,44 @@ class Simulation:
     def getMap(self):
         map = np.zeros((71, 71), dtype=bool)
 
-        # set obstacle positions
-        ox, oy = [], []
-        #border 
-        for i in range(-10, 60):
-            ox.append(i)
-            oy.append(-10)
-            map[i + 10, 0] = True
-        for i in range(-10, 60):
-            ox.append(60)
-            oy.append(i)
-            map[70, i + 10] = True
-        for i in range(-10, 61):
-            ox.append(i)
-            oy.append(60)
-            map[i + 10, 70] = True
-        for i in range(-10, 61):
-            ox.append(-10)
-            oy.append(i)
-            map[0, i + 10] = True
+        while True:
+            # set obstacle positions
+            ox, oy = [], []
+            #border
+            for i in range(-10, 60):
+                ox.append(i)
+                oy.append(-10)
+                map[i + 10, 0] = True
+            for i in range(-10, 60):
+                ox.append(60)
+                oy.append(i)
+                map[70, i + 10] = True
+            for i in range(-10, 61):
+                ox.append(i)
+                oy.append(60)
+                map[i + 10, 70] = True
+            for i in range(-10, 61):
+                ox.append(-10)
+                oy.append(i)
+                map[0, i + 10] = True
 
-        #obstacles
-        for i in range(self.obstacle_count):
-            x = random.randint(-9, 60)
-            y = random.randint(-9, 60)
-            ox.append(x)
-            oy.append(y)
-            map[x + 10, y + 10] = True
+            #obstacles
+            for i in range(self.obstacle_count):
+                x = random.randint(-9, 60)
+                y = random.randint(-9, 60)
+                ox.append(x)
+                oy.append(y)
+                map[x + 10, y + 10] = True
 
-        self.ox = ox
-        self.oy = oy
-        self.map = map
-        a_star = AStarPlanner(ox, oy, self.grid_size, self.robot_radius)
-        rx, ry = a_star.planning(self.sx, self.sy, self.gx, self.gy)
+            self.ox = ox
+            self.oy = oy
+            self.map = map
+
+            a_star = AStarPlanner(ox, oy, self.grid_size, self.robot_radius)
+            rx, ry = a_star.planning(self.sx, self.sy, self.gx, self.gy)
+            if len(rx) > 1:
+                break
+
         rx.reverse()
         ry.reverse()
         self.rx = rx
@@ -466,6 +470,7 @@ def main():
     n_actions=2,
     action_range=1
     )
+
     agent.load_models()
     print(T.cuda.is_available())
     np.random.seed(0)
