@@ -300,32 +300,38 @@ class Simulation:
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
                 if shape == 'line':
-                    x = random.randint(-9, 60)
-                    y = random.randint(-9, 60)
+                    x = random.randint(self.sx + 2, 60)
+                    y = random.randint(self.sx + 2, 60)
                     ox.append(x)
                     oy.append(y)
                     map[x + 10, y + 10] = True
                     direction = random.randint(0, 3)
+                    wall_length = random.randint(4,10)
+                    i = 0
                     if direction == 0: # up
-                        while y < 60:
+                        while y < 60 and i < wall_length:
+                            i += 1
                             y += 1
                             ox.append(x)
                             oy.append(y)
                             map[x + 10, y + 10] = True
                     if direction == 1: # right
-                        while x < 60:
+                        while x < 60 and i < wall_length:
+                            i += 1
                             x += 1
                             ox.append(x)
                             oy.append(y)
                             map[x + 10, y + 10] = True
                     if direction == 2: # down
-                        while y > -10:
+                        while y > -10 and i < wall_length:
+                            i += 1
                             y -= 1
                             ox.append(x)
                             oy.append(y)
                             map[x + 10, y + 10] = True
                     if direction == 3: # left
-                        while x > -10:
+                        while x > -10 and i < wall_length:
+                            i += 1
                             x -= 1
                             ox.append(x)
                             oy.append(y)
@@ -510,9 +516,9 @@ def main():
     gy = 50  # [m]
     grid_size = 2  # [m]
     robot_radius = 1.0  # [m]
-    obstacle_count = 4
+    obstacle_count = 10
 
-    sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
+    sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy) 
 
     agent = Agent(
     alpha=0.000025,
