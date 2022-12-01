@@ -6,6 +6,9 @@ import numpy
 import numpy as np
 import time
 import random
+
+import torch.cuda
+
 from Agent import Agent
 import torch as T
 
@@ -390,6 +393,26 @@ class Simulation:
         # print(f'obstacle Distance: {obsDistance}')
         return (obsDistanceforward, obsDistanceLeft, obsDistanceRight)
 
+    def isHittingObstacle(self):
+        bot_x = round(self.tx[-1])
+        bot_y = round(self.ty[-1])
+        search_size = self.dist_tolerance
+
+        top_left = self.map[bot_x - 1, bot_y + 1]
+        top = self.map[bot_x, bot_y + 1]
+        top_right = self.map[bot_x + 1, bot_y + 1]
+
+        left = self.map[bot_x - 1, bot_y]
+        on = self.map[bot_x, bot_y]
+        right = self.map[bot_x + 1, bot_y]
+
+        bottom_left = self.map[bot_x - 1, bot_y - 1]
+        bottom = self.map[bot_x, bot_y - 1]
+        bottom_right = self.map[bot_x + 1, bot_y - 1]
+
+        return top_left or top or top_right or left or on or right or bottom_left or bottom or bottom_right
+
+
     def getTheta(self):
         #angle difference
         pathVector = (self.rx[self.pnt + 1] - self.rx[self.pnt], self.ry[self.pnt + 1] - self.ry[self.pnt])
@@ -433,9 +456,9 @@ class Simulation:
 
 
         win = 100 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        hit = -200 if obstacles[0] <= self.dist_tolerance or obstacles[1] <= self.dist_tolerance or obstacles[2] <= self.dist_tolerance else 0
+        hit = -200 if self.isHittingObstacle() else 0
 
-        return hit + (self.robot_radius-path_distance) + goal - abs(self.getTheta()) * self.robot_radius - 1 + win
+        return hit + (self.robot_radius-path_distance) + goal - 0.1 * abs(self.getTheta()) - 1 + win
     
     def isDone(self):
         term = False
@@ -446,7 +469,7 @@ class Simulation:
             term = True
             print("Went too far from path")
         obstacles = self.getObstacle()
-        if obstacles[0] <= self.dist_tolerance or obstacles[1] <= self.dist_tolerance or obstacles[2] <= self.dist_tolerance:
+        if self.isHittingObstacle():
             term = True
             print("Hit an obstacle")
         return term
@@ -492,7 +515,7 @@ class Simulation:
         self.print()
         for i in range(len(self.tx)):
             self.show(self.tx[i], self.ty[i], self.theta[i])
-            plt.pause(0.01)
+            plt.pause(0.005)
 
 
     def distance(self, x1, y1, x2, y2):
@@ -538,7 +561,9 @@ def main():
     action_range=1
     )
 
+
     print(T.cuda.is_available())
+    print(torch.cuda.get_device_name(0))
     np.random.seed(0)
 
     score_history = []
