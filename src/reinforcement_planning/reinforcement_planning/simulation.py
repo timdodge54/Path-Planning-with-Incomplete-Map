@@ -447,7 +447,7 @@ class Simulation:
         win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hitting = self.isHittingObstacle()
         hit = -300 if hitting else 0
-        theta = -3 * abs(self.getTheta())
+        theta = -5 * abs(self.getTheta())
 
         return hit + off_path + goal + theta + win
 
