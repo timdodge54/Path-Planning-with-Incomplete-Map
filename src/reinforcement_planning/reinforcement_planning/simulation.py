@@ -199,14 +199,20 @@ class Simulation:
         self.pnt = 0
         self.steps = 0
         self.getMap()
+        angle = np.linspace( 0 , 2 * np.pi , 150 )
+        radius = self.robot_radius - 0.5
+        xpoints = sx + radius * np.cos( angle )
+        ypoints = sy + radius * np.sin( angle )
+        self.robot, = plt.plot(xpoints, ypoints, marker = ".", color = 'r')
+        self.robotAngle, = plt.plot(sx + radius * np.cos( self.theta[-1] ), sy + radius * np.sin( self.theta[-1]  ), marker = ".", color = 'b')
 
     def __motion(
         self, v_left: float, v_right: float, x: float, y: float, theta: float, dt: float
     ):
         """Calculate the forward kinematics of the robot"""
         aveVel = (1 / 2) * (v_right + v_left)
-        x_Dot = -aveVel * math.sin(theta)
-        y_Dot = aveVel * math.cos(theta)
+        x_Dot = -aveVel * math.sin(theta - math.pi / 2)
+        y_Dot = aveVel * math.cos(theta - math.pi / 2)
         theta_Dot = (v_right - v_left) / (self.robot_radius*2)
 
         x_new = x + x_Dot * dt
@@ -329,7 +335,7 @@ class Simulation:
 
     def step(self, action):
         vLeft, vRight = action[0], action[1]
-        dt = 0.1
+        dt = 1
         x, y, theta = self.__motion(vLeft, vRight, self.tx[-1], self.ty[-1], self.theta[-1], dt)
 
         ##replaced by finding the actual new point and going there
@@ -344,15 +350,34 @@ class Simulation:
         g_x, g_y = self.getGoal()
         return [path_x, path_y, g_x, g_y, self.getObstacle(), self.getTheta(),  self.ix[-1], self.iy[-1], self.theta[-1]], self.getReward(), self.isDone()
 
-    def print(self):
+    def print(self, end=True):
         plt.plot(self.ox, self.oy, ".k")
         plt.plot(self.sx, self.sy, "og")
         plt.plot(self.gx, self.gy, "xb")
         plt.plot(self.rx, self.ry, '-r')
         plt.grid(True)
         plt.axis("equal")
-        plt.plot(self.tx, self.ty, "-g")     
-        plt.show()   
+        plt.plot(self.tx, self.ty, "-g")        
+
+    def show(self, x, y, theta):
+        self.robot.remove()
+        self.robotAngle.remove()
+        angle = np.linspace( 0 , 2 * np.pi , 150 )
+        radius = self.robot_radius - 0.5
+        xpoints = x + radius * np.cos( angle )
+        ypoints = y + radius * np.sin( angle )
+        self.robot, = plt.plot(xpoints, ypoints, marker = ".", color = 'r')
+        self.robotAngle, = plt.plot(x + radius * np.cos( theta ), y + radius * np.sin( theta ), marker = ".", color = 'b')
+
+    def showPath(self):
+        self.print()
+        for i in range(len(self.tx)):
+            plt.clf()
+            self.print()
+            self.show(self.tx[i], self.ty[i], self.theta[i])
+            plt.draw()
+            time.sleep(1)
+            plt.show()
 
     def distance(self, x1, y1, x2, y2):
         return math.sqrt((x2-x1)**2 + (y2-y1)**2)
@@ -382,6 +407,9 @@ def main():
     obstacle_count = 25
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
+    for i in range(10):
+        sim.step([0.5,0.5])
+    sim.showPath()
 
     agent = Agent(
     alpha=0.000025,
