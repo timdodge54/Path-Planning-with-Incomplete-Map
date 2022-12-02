@@ -340,7 +340,7 @@ class Simulation:
                     oy.append(y)
                     map[x, y] = True
                     direction = random.randint(0, 3)
-                    wall_length = random.randint(4,20)
+                    wall_length = random.randint(5,25)
                     i = 0
                     if direction == 0: # up
                         while y < 70 and i < wall_length:
@@ -454,22 +454,22 @@ class Simulation:
         gx, gy = self.getGoal()
 
         if self.goal_magnitude != None:
-            goal = 400 * (self.goal_magnitude - numpy.sqrt(gx*gx + gy * gy))
+            goal = 125 * (self.goal_magnitude - numpy.sqrt(gx*gx + gy * gy))
         else:
             goal = 0
         self.goal_magnitude = numpy.sqrt(gx * gx + gy * gy)
 
         path_distance = numpy.sqrt(x*x + y*y)
         off_path = (self.robot_radius - path_distance)
+        off_path_sparse = 0
         if path_distance > 5 * self.robot_radius:
-            off_path -= 400
+            off_path_sparse -= 200
 
         win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        hitting = self.isHittingObstacle()
-        hit = -300 if hitting else 0
-        theta = -5 * abs(self.getTheta())
-
-        return hit + off_path + goal + theta + win
+        hit = -200 if self.isHittingObstacle() else 0
+        theta = -2 * abs(self.getTheta())
+        #rint((hit, off_path, goal, theta, win))
+        return hit + win + off_path_sparse + off_path + goal + theta
 
     
     def isDone(self):
@@ -501,8 +501,11 @@ class Simulation:
         self.steps += 1
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
+        goal_distance = np.sqrt(g_x**2 + g_y**2)
         obstacles = self.getObstacle()
-        return [path_x, path_y, g_x, g_y, obstacles[0], obstacles[1], obstacles[2], self.getTheta(), self.theta[-1]], self.getReward(), self.isDone()
+
+        return [path_x, path_y, g_x/goal_distance, g_y/goal_distance, obstacles[0], obstacles[1], obstacles[2], self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
+
 
     def print(self, end=True):
         plt.plot(self.ox, self.oy, ".k")
@@ -552,8 +555,9 @@ class Simulation:
 
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
+        goal_distance = np.sqrt(g_x**2 + g_y**2)
         obs_1, obs_2, obs_3 = self.getObstacle()
-        return [path_x, path_y, g_x, g_y, obs_1, obs_2, obs_3, self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
+        return [path_x, path_y, g_x/goal_distance, g_y/goal_distance, obs_1, obs_2, obs_3, self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
 
 def main():
     print(__file__ + " start!!")
@@ -571,16 +575,15 @@ def main():
     agent = Agent(
     alpha=0.000025,
     beta=0.00025,
-    input_dims=[9],
+    input_dims=[11],
     tau=0.001,
     batch_size=64,
-    fc1_dims=400,
-    fc2_dims=300,
+    fc1_dims=600,
+    fc2_dims=500,
     n_actions=2,
     action_range=1
     )
 
-    agent.load_models()
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))
     np.random.seed(0)
@@ -612,6 +615,8 @@ def main():
         if i % 5 == 0:
             sim.showPath()
             plt.close()
+
+    
 
 
 

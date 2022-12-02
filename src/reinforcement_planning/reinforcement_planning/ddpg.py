@@ -16,7 +16,7 @@ agent = Agent(
     n_actions=2,
 )
 
-agent.load_models()
+
 print(T.cuda.is_available())
 np.random.seed(0)
 
