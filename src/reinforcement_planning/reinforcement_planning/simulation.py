@@ -1,19 +1,15 @@
 import math
-from platform import node
-from queue import PriorityQueue
+import os.path
 
 import numpy
 import numpy as np
-import time
 import random
-
+from IPython.display import clear_output
 import torch.cuda
-
-from Agent import Agent
 import torch as T
-
 import matplotlib.pyplot as plt
 
+from Agent import Agent
 show_animation = True
 
 
@@ -613,6 +609,45 @@ class Simulation:
         obs_1, obs_2, obs_3, obs_4 = self.getObstacle()
         return [path_x, path_y, g_x/goal_distance, g_y/goal_distance, obs_1, obs_2, obs_3, obs_4, self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
 
+    def plot_res(self, values, title='', goal=1000):
+        ''' Plot the reward curve and histogram of results over time.'''
+        # Update the window after each episode
+        clear_output(wait=True)
+
+        # Define the figure
+        f, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+        f.suptitle(title)
+        ax[0].plot(values, label='score per run')
+        ax[0].axhline(goal, c='red', ls='--', label='goal')
+        ax[0].set_xlabel('Episodes')
+        ax[0].set_ylabel('Reward')
+        x = range(len(values))
+        ax[0].legend()
+        # Calculate the trend
+        try:
+            z = np.polyfit(x, values, 1)
+            p = np.poly1d(z)
+            ax[0].plot(x, p(x), "--", label='trend')
+        except:
+            print('')
+
+        # Plot the histogram of results
+        ax[1].hist(values[-50:])
+        ax[1].axvline(goal, c='red', label='goal')
+        ax[1].set_xlabel('Scores per Last 50 Episodes')
+        ax[1].set_ylabel('Frequency')
+        ax[1].legend()
+
+        dir_name = os.path.dirname(__file__)
+        plt.savefig(
+            os.path.join(dir_name, "tmp/LearningPlot.png")
+        )
+
+        plt.show()
+
+
+
+
 def main():
     print(__file__ + " start!!")
             # start and goal position
@@ -624,57 +659,53 @@ def main():
     robot_radius = 1.0  # [m]
     obstacle_count = 5
 
-    sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy) 
-    for i in range(100):
-        sim.reset()
-        sim.showPath()
-        plt.clf()
+    sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
 
-    # agent = Agent(
-    # alpha=0.000025,
-    # beta=0.00025,
-    # input_dims=[12],
-    # tau=0.001,
-    # batch_size=64,
-    # fc1_dims=400,
-    # fc2_dims=300,
-    # n_actions=2,
-    # action_range=1
-    # )
-
-    # agent.load_models()
-    # print(T.cuda.is_available())
-    # print(torch.cuda.get_device_name(0))
-    # np.random.seed(0)
-
-    # score_history = []
-    # for i in range(1000):
-    #     done = False
-    #     score = 0
-    #     obs = sim.reset()
-    #     while not done:
-    #         act = agent.choose_action(obs)
-    #         new_state, reward, done = sim.step(act)
-    #         agent.remember(obs, act, reward, new_state, int(done))
-    #         agent.learn()
-    #         score += reward
-    #         obs = new_state
+    agent = Agent(
+    alpha=0.000025,
+    beta=0.00025,
+    input_dims=[12],
+    tau=0.001,
+    batch_size=64,
+    fc1_dims=400,
+    fc2_dims=300,
+    n_actions=2,
+    action_range=1
+    )
 
 
-    #     score_history.append(score)
-    #     print(
-    #         "episode",
-    #         i,
-    #         "score %.2f" % score,
-    #         "100 game average %.2f" % np.mean(score_history[-100:]),
-    #     )
+    print(T.cuda.is_available())
+    print(torch.cuda.get_device_name(0))
+    np.random.seed(0)
 
-    #     if i % 25 == 0:
-    #         agent.save_models()
-    #     if i % 5 == 0:
-    #         sim.showPath()
-    #         plt.close()
+    score_history = []
+    for i in range(1000):
+        done = False
+        score = 0
+        obs = sim.reset()
+        while not done:
+            act = agent.choose_action(obs)
+            new_state, reward, done = sim.step(act)
+            agent.remember(obs, act, reward, new_state, int(done))
+            agent.learn()
+            score += reward
+            obs = new_state
 
+        score_history.append(score)
+        print(
+            "episode",
+            i,
+            "score %.2f" % score,
+            "100 game average %.2f" % np.mean(score_history[-100:]),
+        )
+
+        if i % 25 == 0:
+            agent.save_models()
+        if i % 5 == 0:
+            sim.showPath()
+            plt.close()
+
+    sim.plot_res(score_history, "Learning Rate Graphs", 2000)
     
 
 
