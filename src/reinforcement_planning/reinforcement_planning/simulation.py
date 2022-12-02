@@ -229,6 +229,11 @@ class AStarPlanner:
 
         return motion
 
+def normalDistribution(minValue, maxValue):
+    mid = minValue + (maxValue - minValue) / 2
+    std_dev = (maxValue - mid) / 3
+
+    return round(np.random.normal(loc=mid, scale=std_dev))
 
 class Simulation:
     def __init__(self, robot_radius, grid_size, obstacle_count, sx, sy, gx, gy):
@@ -245,6 +250,7 @@ class Simulation:
         self.pnt = 0
         self.steps = 0
         self.shapes = ['line']
+        self.pathDistance = 50
         self.getMap()
         self.tx = [sx]
         self.ty = [sy]
@@ -276,10 +282,31 @@ class Simulation:
     def getMap(self):
 
         while True:
-            self.sx = random.randint(1, 70)  # [m]
-            self.sy = random.randint(1, 70)  # [m]
             self.gx = random.randint(1, 70)  # [m]
             self.gy = random.randint(1, 70)  # [m]
+
+            self.sx = -1
+            self.sy = -1 
+
+            while self.sx < 1 or self.sx > 70 or self.sy < 1 or self.sy > 70:
+                theta = random.random() * math.pi * 2
+                self.sx = self.gx + math.cos(theta) * self.pathDistance
+                self.sy = self.gy + math.sin(theta) * self.pathDistance
+
+            if self.gx < self.sx:
+                min_obstacle_x = self.gx
+                max_obstacle_x = self.sx
+            else:
+                min_obstacle_x = self.sx
+                max_obstacle_x = self.gx
+
+            if self.gy < self.sy:
+                min_obstacle_y = self.gy
+                max_obstacle_y = self.sy
+            else:
+                min_obstacle_y = self.sy
+                max_obstacle_y = self.gy   
+
             map = np.zeros((71, 71), dtype=bool)
 
             # set obstacle positions
@@ -307,49 +334,42 @@ class Simulation:
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
                 if shape == 'line':
-                    while True:
-                        x = random.randint(0, 70)
-                        y = random.randint(0, 70)
-                        if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                            break
+                    x = normalDistribution(min_obstacle_x, max_obstacle_x)
+                    y = normalDistribution(min_obstacle_y, max_obstacle_y)
                     ox.append(x)
                     oy.append(y)
                     map[x, y] = True
                     direction = random.randint(0, 3)
-                    wall_length = random.randint(4,10)
+                    wall_length = random.randint(4,20)
                     i = 0
                     if direction == 0: # up
                         while y < 70 and i < wall_length:
                             i += 1
                             y += 1
-                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                                ox.append(x)
-                                oy.append(y)
-                                map[x, y] = True
+                            ox.append(x)
+                            oy.append(y)
+                            map[x, y] = True
                     if direction == 1: # right
                         while x < 70 and i < wall_length:
                             i += 1
                             x += 1
-                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                                ox.append(x)
-                                oy.append(y)
-                                map[x, y] = True
+                            ox.append(x)
+                            oy.append(y)
+                            map[x, y] = True
                     if direction == 2: # down
                         while y > 0 and i < wall_length:
                             i += 1
                             y -= 1
-                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                                ox.append(x)
-                                oy.append(y)
-                                map[x, y] = True
+                            ox.append(x)
+                            oy.append(y)
+                            map[x, y] = True
                     if direction == 3: # left
                         while x > 0 and i < wall_length:
                             i += 1
                             x -= 1
-                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                                ox.append(x)
-                                oy.append(y)
-                                map[x, y] = True
+                            ox.append(x)
+                            oy.append(y)
+                            map[x, y] = True
                         
             self.ox = ox
             self.oy = oy
@@ -482,7 +502,7 @@ class Simulation:
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
         obstacles = self.getObstacle()
-        return [path_x, path_y, g_x, g_y, obstacles[0], obstacles[1], obstacles[2], self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
+        return [path_x, path_y, g_x, g_y, obstacles[0], obstacles[1], obstacles[2], self.getTheta(), self.theta[-1]], self.getReward(), self.isDone()
 
     def print(self, end=True):
         plt.plot(self.ox, self.oy, ".k")
@@ -547,13 +567,15 @@ def main():
     obstacle_count = 10
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy) 
-    for i in range(1000):
+    for i in range(100):
         sim.reset()
+        sim.showPath()
+        plt.clf()
 
     agent = Agent(
     alpha=0.000025,
     beta=0.00025,
-    input_dims=[11],
+    input_dims=[9],
     tau=0.001,
     batch_size=64,
     fc1_dims=400,
