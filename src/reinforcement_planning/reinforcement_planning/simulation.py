@@ -567,8 +567,6 @@ def main():
     obstacle_count = 10
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy) 
-    for i in range(1000):
-        sim.reset()
 
     agent = Agent(
     alpha=0.000025,
