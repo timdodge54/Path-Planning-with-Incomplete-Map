@@ -231,7 +231,7 @@ class AStarPlanner:
 
 def normalDistribution(minValue, maxValue):
     mid = minValue + (maxValue - minValue) / 2
-    std_dev = (maxValue - mid) / 3
+    std_dev = (maxValue - mid) / 2
 
     return round(np.random.normal(loc=mid, scale=std_dev))
 
@@ -251,6 +251,7 @@ class Simulation:
         self.steps = 0
         self.shapes = ['line']
         self.pathDistance = 50
+        self.cone_angle = 7.5
         self.getMap()
         self.tx = [sx]
         self.ty = [sy]
@@ -334,13 +335,16 @@ class Simulation:
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
                 if shape == 'line':
-                    x = normalDistribution(min_obstacle_x, max_obstacle_x)
-                    y = normalDistribution(min_obstacle_y, max_obstacle_y)
+                    while True:
+                        x = normalDistribution(min_obstacle_x, max_obstacle_x)
+                        y = normalDistribution(min_obstacle_y, max_obstacle_y)
+                        if(x < 70 and x > 0 and y < 70 and y > 0):
+                            break
                     ox.append(x)
                     oy.append(y)
                     map[x, y] = True
                     direction = random.randint(0, 3)
-                    wall_length = random.randint(5,25)
+                    wall_length = random.randint(4,30)
                     i = 0
                     if direction == 0: # up
                         while y < 70 and i < wall_length:
@@ -411,18 +415,59 @@ class Simulation:
             if self.map[round(self.tx[-1] + i * math.cos(self.theta[-1])), round(self.ty[-1] + i * math.sin(self.theta[-1]))]:
                 obsDistanceforward = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
                 break
+            coneTheta = self.theta[-1] - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+                break
+            coneTheta = self.theta[-1] - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+                break
+            obsDistanceforward = min(obsDistanceforward, obsDistanceConeLeft, obsDistanceConeRight)
         for i in range(10):
-            leftTheta = self.theta[-1] - (60 * math.pi / 180) 
+            leftTheta = self.theta[-1] - (90 * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(leftTheta))]:
                 obsDistanceLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(leftTheta)), self.iy[-1] + round(i * math.sin(leftTheta)))
                 break
+            coneTheta = leftTheta - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+                break
+            coneTheta = leftTheta - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+                break
+            obsDistanceLeft = min(obsDistanceLeft, obsDistanceConeLeft, obsDistanceConeRight)
         for i in range(10):
-            rightTheta = self.theta[-1] + (60 * math.pi / 180) 
+            rightTheta = self.theta[-1] + (90 * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(rightTheta)), round(self.ty[-1] + i * math.sin(rightTheta))]:
                 obsDistanceRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(rightTheta)), self.iy[-1] + round(i * math.sin(rightTheta)))
                 break
+            coneTheta = rightTheta - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+                break
+            coneTheta = rightTheta - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+                break
+            obsDistanceRight = min(obsDistanceRight, obsDistanceConeLeft, obsDistanceConeRight)
+        for i in range(10):
+            backTheta = self.theta[-1] + (180 * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(backTheta)), round(self.ty[-1] + i * math.sin(backTheta))]:
+                obsDistanceBack = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(backTheta)), self.iy[-1] + round(i * math.sin(backTheta)))
+                break
+            coneTheta = backTheta - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+                break
+            coneTheta = backTheta - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+                break
+            obsDistanceBack = min(obsDistanceBack, obsDistanceConeLeft, obsDistanceConeRight)
         # print(f'obstacle Distance: {obsDistance}')
-        return (obsDistanceforward, obsDistanceLeft, obsDistanceRight)
+        return (obsDistanceforward, obsDistanceLeft, obsDistanceRight, obsDistanceBack)
 
     def isHittingObstacle(self):
         bot_x = round(self.tx[-1])
@@ -504,7 +549,7 @@ class Simulation:
         goal_distance = np.sqrt(g_x**2 + g_y**2)
         obstacles = self.getObstacle()
 
-        return [path_x, path_y, g_x/goal_distance, g_y/goal_distance, obstacles[0], obstacles[1], obstacles[2], self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
+        return [path_x, path_y, g_x/goal_distance, g_y/goal_distance, obstacles[0], obstacles[1], obstacles[2], obstacles[3], self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
 
 
     def print(self, end=True):
@@ -568,22 +613,23 @@ def main():
     gy = random.randint(1, 69)  # [m]
     grid_size = 2  # [m]
     robot_radius = 1.0  # [m]
-    obstacle_count = 10
+    obstacle_count = 5
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy) 
 
     agent = Agent(
     alpha=0.000025,
     beta=0.00025,
-    input_dims=[11],
+    input_dims=[12],
     tau=0.001,
     batch_size=64,
-    fc1_dims=600,
-    fc2_dims=500,
+    fc1_dims=400,
+    fc2_dims=300,
     n_actions=2,
     action_range=1
     )
 
+    agent.load_models()
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))
     np.random.seed(0)
