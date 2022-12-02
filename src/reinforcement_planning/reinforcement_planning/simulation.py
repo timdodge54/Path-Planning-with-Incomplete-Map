@@ -404,9 +404,9 @@ class Simulation:
         return goal_vector
 
     def getObstacle(self):
-        obsDistanceforward = 100
-        obsDistanceLeft = 100
-        obsDistanceRight = 100
+        obsDistanceforward = 10
+        obsDistanceLeft = 10
+        obsDistanceRight = 10
         for i in range(10):
             if self.map[round(self.tx[-1] + i * math.cos(self.theta[-1])), round(self.ty[-1] + i * math.sin(self.theta[-1]))]:
                 obsDistanceforward = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
@@ -467,7 +467,7 @@ class Simulation:
         win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hitting = self.isHittingObstacle()
         hit = -300 if hitting else 0
-        theta = -3 * abs(self.getTheta())
+        theta = -5 * abs(self.getTheta())
 
         return hit + off_path + goal + theta + win
 
@@ -567,10 +567,8 @@ def main():
     obstacle_count = 10
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy) 
-    for i in range(100):
+    for i in range(1000):
         sim.reset()
-        sim.showPath()
-        plt.clf()
 
     agent = Agent(
     alpha=0.000025,
@@ -584,6 +582,7 @@ def main():
     action_range=1
     )
 
+    agent.load_models()
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))
     np.random.seed(0)
