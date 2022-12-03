@@ -247,7 +247,7 @@ class Simulation:
         self.steps = 0
         self.shapes = ['line']
         self.pathDistance = 50
-        self.cone_angle = 7.5
+        self.cone_angle = 10
         self.getMap()
         self.tx = [sx]
         self.ty = [sy]
@@ -285,7 +285,7 @@ class Simulation:
             self.sx = -1
             self.sy = -1 
 
-            while self.sx < 1 or self.sx > 70 or self.sy < 1 or self.sy > 70:
+            while self.sx < 1 or self.sx > 69 or self.sy < 1 or self.sy > 69:
                 theta = random.random() * math.pi * 2
                 self.sx = self.gx + math.cos(theta) * self.pathDistance
                 self.sy = self.gy + math.sin(theta) * self.pathDistance
@@ -405,11 +405,13 @@ class Simulation:
 
     def getObstacle(self):
         obsDistanceforward = 10
+        obsDistanceConeLeft = 10
+        obsDistanceConeRight = 10
+
         obsDistanceLeft = 10
         obsDistanceRight = 10
         obsDistanceBack = 10
-        obsDistanceConeLeft = 10
-        obsDistanceConeRight = 10
+
         for i in range(10):
             if self.map[round(self.tx[-1] + i * math.cos(self.theta[-1])), round(self.ty[-1] + i * math.sin(self.theta[-1]))]:
                 obsDistanceforward = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
@@ -426,7 +428,7 @@ class Simulation:
         obsDistanceConeLeft = 10
         obsDistanceConeRight = 10
         for i in range(10):
-            leftTheta = self.theta[-1] - (90 * math.pi / 180) 
+            leftTheta = self.theta[-1] + (90 * math.pi / 180)
             if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(leftTheta))]:
                 obsDistanceLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(leftTheta)), self.iy[-1] + round(i * math.sin(leftTheta)))
                 break
@@ -442,7 +444,7 @@ class Simulation:
         obsDistanceConeLeft = 10
         obsDistanceConeRight = 10
         for i in range(10):
-            rightTheta = self.theta[-1] + (90 * math.pi / 180) 
+            rightTheta = self.theta[-1] - (90 * math.pi / 180)
             if self.map[round(self.tx[-1] + i * math.cos(rightTheta)), round(self.ty[-1] + i * math.sin(rightTheta))]:
                 obsDistanceRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(rightTheta)), self.iy[-1] + round(i * math.sin(rightTheta)))
                 break
@@ -517,7 +519,7 @@ class Simulation:
 
         win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hit = -200 if self.isHittingObstacle() else 0
-        theta = -2 * abs(self.getTheta())
+        theta = abs(self.getTheta())
         #rint((hit, off_path, goal, theta, win))
         return hit + win + off_path_sparse + off_path + goal + theta
 
@@ -667,8 +669,8 @@ def main():
     input_dims=[12],
     tau=0.001,
     batch_size=64,
-    fc1_dims=400,
-    fc2_dims=300,
+    fc1_dims=600,
+    fc2_dims=500,
     n_actions=2,
     action_range=1
     )
