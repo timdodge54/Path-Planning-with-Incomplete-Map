@@ -247,7 +247,7 @@ class Simulation:
         self.steps = 0
         self.shapes = ['line']
         self.pathDistance = 50
-        self.cone_angle = 10
+        self.cone_angle = 15
         self.getMap()
         self.tx = [sx]
         self.ty = [sy]
@@ -404,6 +404,7 @@ class Simulation:
         return goal_vector
 
     def getObstacle(self):
+        max_distance = 10
         obsDistanceforward = 10
         obsDistanceConeLeft = 10
         obsDistanceConeRight = 10
@@ -415,64 +416,64 @@ class Simulation:
         for i in range(10):
             if self.map[round(self.tx[-1] + i * math.cos(self.theta[-1])), round(self.ty[-1] + i * math.sin(self.theta[-1]))]:
                 obsDistanceforward = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
-                break
             coneTheta = self.theta[-1] - (self.cone_angle * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
                 obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
-                break
             coneTheta = self.theta[-1] + (self.cone_angle * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
                 obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
-                break
             obsDistanceforward = min(obsDistanceforward, obsDistanceConeLeft, obsDistanceConeRight)
+            if obsDistanceforward < max_distance:
+                break
+
         obsDistanceConeLeft = 10
         obsDistanceConeRight = 10
         for i in range(10):
             leftTheta = self.theta[-1] + (90 * math.pi / 180)
             if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(leftTheta))]:
                 obsDistanceLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(leftTheta)), self.iy[-1] + round(i * math.sin(leftTheta)))
-                break
             coneTheta = leftTheta - (self.cone_angle * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
                 obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
-                break
             coneTheta = leftTheta + (self.cone_angle * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
                 obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
-                break
             obsDistanceLeft = min(obsDistanceLeft, obsDistanceConeLeft, obsDistanceConeRight)
+            if obsDistanceLeft < max_distance:
+                break
+
         obsDistanceConeLeft = 10
         obsDistanceConeRight = 10
         for i in range(10):
             rightTheta = self.theta[-1] - (90 * math.pi / 180)
             if self.map[round(self.tx[-1] + i * math.cos(rightTheta)), round(self.ty[-1] + i * math.sin(rightTheta))]:
                 obsDistanceRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(rightTheta)), self.iy[-1] + round(i * math.sin(rightTheta)))
-                break
             coneTheta = rightTheta - (self.cone_angle * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
                 obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
-                break
             coneTheta = rightTheta + (self.cone_angle * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
                 obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
-                break
             obsDistanceRight = min(obsDistanceRight, obsDistanceConeLeft, obsDistanceConeRight)
+            if obsDistanceRight < max_distance:
+                break
+
         obsDistanceConeLeft = 10
         obsDistanceConeRight = 10
         for i in range(10):
             backTheta = self.theta[-1] + (180 * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(backTheta)), round(self.ty[-1] + i * math.sin(backTheta))]:
                 obsDistanceBack = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(backTheta)), self.iy[-1] + round(i * math.sin(backTheta)))
-                break
             coneTheta = backTheta - (self.cone_angle * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
                 obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
-                break
             coneTheta = backTheta + (self.cone_angle * math.pi / 180) 
             if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
                 obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
-                break
             obsDistanceBack = min(obsDistanceBack, obsDistanceConeLeft, obsDistanceConeRight)
+            if obsDistanceBack < max_distance:
+                break
+
         # print(f'obstacle Distance: {obsDistance}')
         return (obsDistanceforward, obsDistanceLeft, obsDistanceRight, obsDistanceBack)
 
@@ -513,12 +514,15 @@ class Simulation:
 
         path_distance = numpy.sqrt(x*x + y*y)
         off_path = (self.robot_radius - path_distance)
+        off_path_sparse = 0
+        if path_distance > 7 * self.robot_radius:
+            off_path_sparse -= 200
 
-        win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
+        win = 1000 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hit = -200 if self.isHittingObstacle() else 0
         theta = -abs(self.getTheta())
         # print((hit, off_path, goal, theta, win))
-        return hit + win + off_path + goal + theta
+        return hit + win + off_path_sparse + off_path + goal + theta
 
     
     def isDone(self):
@@ -526,6 +530,10 @@ class Simulation:
         if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance:
             print("Made it to goal")
             term = True
+        if self.distance(self.tx[-1], self.ty[-1], self.rx[self.pnt], self.ry[self.pnt]) > 5 * self.robot_radius:
+            term = True
+            print("Went too far from path")
+        obstacles = self.getObstacle()
         if self.isHittingObstacle():
             term = True
             print("Hit an obstacle")
@@ -645,8 +653,7 @@ class Simulation:
         plt.savefig(
             os.path.join(dir_name, "tmp/LearningPlot.png")
         )
-
-        plt.show()
+        plt.close(f)
 
 
 
@@ -660,7 +667,7 @@ def main():
     gy = random.randint(1, 69)  # [m]
     grid_size = 2  # [m]
     robot_radius = 1.0  # [m]
-    obstacle_count = 5
+    obstacle_count = 10
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
 
@@ -677,6 +684,7 @@ def main():
         action_range=1
     )
 
+    agent.load_models()
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))
     np.random.seed(0)
@@ -704,11 +712,12 @@ def main():
 
         if i % 25 == 0:
             agent.save_models()
+            sim.plot_res(score_history, "Learning Rate Graphs", 2000)
         if i % 5 == 0:
             sim.showPath()
             plt.close()
 
-    sim.plot_res(score_history, "Learning Rate Graphs", 2000)
+
     
 
 
