@@ -14,6 +14,7 @@ class ActorNetwork(nn.Module):
         input_dims,
         fc1_dims,
         fc2_dims,
+        fc3_dims,
         n_actions,
         action_range,
         name,
@@ -24,6 +25,7 @@ class ActorNetwork(nn.Module):
         self.n_actions = n_actions
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
+        self.fc3_dims = fc3_dims
         self.checkpoint_dir = os.path.join(chkpt_dir, name + "_ddpg")
         self.action_range = action_range
 
@@ -39,10 +41,16 @@ class ActorNetwork(nn.Module):
         T.nn.init.uniform_(self.fc1.bias.data, -f2, f2)
         self.bn2 = nn.LayerNorm(self.fc2_dims)
 
-        f3 = 0.003
-        self.mu = nn.Linear(self.fc2_dims, self.n_actions)
-        T.nn.init.uniform_(self.mu.weight.data, -f3, f3)
-        T.nn.init.uniform_(self.mu.bias.data, -f3, f3)
+        self.fc3 = nn.Linear(self.fc2_dims, self.fc3_dims)
+        f3 = 1 / np.sqrt(self.fc3.weight.data.size()[0])
+        T.nn.init.uniform_(self.fc3.weight.data, -f3, f3)
+        T.nn.init.uniform_(self.fc3.bias.data, -f3, f3)
+        self.bn3 = nn.LayerNorm(self.fc3_dims)
+
+        f4 = 0.003
+        self.mu = nn.Linear(self.fc3_dims, self.n_actions)
+        T.nn.init.uniform_(self.mu.weight.data, -f4, f4)
+        T.nn.init.uniform_(self.mu.bias.data, -f4, f4)
 
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
         self.device = T.device("cuda:0" if T.cuda.is_available() else "cpu")
@@ -55,6 +63,8 @@ class ActorNetwork(nn.Module):
         x = self.fc2(x)
         x = self.bn2(x)
         x = F.relu(x)
+        x = self.fc3(x)
+        x = self.bn3(x)
         x = T.tanh(self.mu(x)) * self.action_range
 
         return x

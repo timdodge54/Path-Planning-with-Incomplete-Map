@@ -513,15 +513,12 @@ class Simulation:
 
         path_distance = numpy.sqrt(x*x + y*y)
         off_path = (self.robot_radius - path_distance)
-        off_path_sparse = 0
-        if path_distance > 5 * self.robot_radius:
-            off_path_sparse -= 200
 
         win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hit = -200 if self.isHittingObstacle() else 0
-        theta = abs(self.getTheta())
-        #rint((hit, off_path, goal, theta, win))
-        return hit + win + off_path_sparse + off_path + goal + theta
+        theta = -abs(self.getTheta())
+        # print((hit, off_path, goal, theta, win))
+        return hit + win + off_path + goal + theta
 
     
     def isDone(self):
@@ -529,10 +526,6 @@ class Simulation:
         if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance:
             print("Made it to goal")
             term = True
-        if self.distance(self.tx[-1], self.ty[-1], self.rx[self.pnt], self.ry[self.pnt]) > 5 * self.robot_radius:
-            term = True
-            print("Went too far from path")
-        obstacles = self.getObstacle()
         if self.isHittingObstacle():
             term = True
             print("Hit an obstacle")
@@ -569,20 +562,28 @@ class Simulation:
         plt.plot(self.tx, self.ty, "-g")        
 
     def show(self, x, y, theta):
-        self.robot.remove()
-        self.robotAngle.remove()
-        angle = np.linspace( 0 , 2 * np.pi , 150 )
-        radius = self.robot_radius - 0.5
-        xpoints = x + radius * np.cos( angle )
-        ypoints = y + radius * np.sin( angle )
-        self.robot, = plt.plot(xpoints, ypoints, marker = ".", color = 'r')
-        self.robotAngle, = plt.plot(x + radius * math.cos( theta ), y + radius * math.sin( theta ), marker = ".", color = 'b')
+        try:
+            self.robot.remove()
+            self.robotAngle.remove()
+            angle = np.linspace( 0 , 2 * np.pi , 150 )
+            radius = self.robot_radius - 0.5
+            xpoints = x + radius * np.cos( angle )
+            ypoints = y + radius * np.sin( angle )
+            self.robot, = plt.plot(xpoints, ypoints, marker = ".", color = 'r')
+            self.robotAngle, = plt.plot(x + radius * math.cos( theta ), y + radius * math.sin( theta ), marker = ".", color = 'b')
+        except KeyboardInterrupt:
+            print("Visualization Exited")
+            raise KeyboardInterrupt
 
     def showPath(self):
         self.print()
-        for i in range(len(self.tx)):
-            self.show(self.tx[i], self.ty[i], self.theta[i])
-            plt.pause(0.005)
+        try:
+            for i in range(len(self.tx)):
+                self.show(self.tx[i], self.ty[i], self.theta[i])
+                plt.pause(0.005)
+        except KeyboardInterrupt:
+            print("Visualization exited")
+            return
 
 
     def distance(self, x1, y1, x2, y2):
@@ -664,17 +665,17 @@ def main():
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
 
     agent = Agent(
-    alpha=0.000025,
-    beta=0.00025,
-    input_dims=[12],
-    tau=0.001,
-    batch_size=64,
-    fc1_dims=600,
-    fc2_dims=500,
-    n_actions=2,
-    action_range=1
+        alpha=0.000025,
+        beta=0.00025,
+        input_dims=[12],
+        tau=0.001,
+        batch_size=64,
+        fc1_dims=600,
+        fc2_dims=500,
+        fc3_dims=400,
+        n_actions=2,
+        action_range=1
     )
-
 
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))

@@ -23,6 +23,7 @@ class Agent:
         max_size=1000000,
         fc1_dims=400,
         fc2_dims=300,
+        fc3_dims=200,
         batch_size=64,
     ):
         self.gamma = gamma
@@ -36,10 +37,10 @@ class Agent:
         self.noise = OUActionNoise(mu=np.zeros(n_actions))
 
         self.actor = ActorNetwork(
-            alpha, input_dims, fc1_dims, fc2_dims, n_actions=n_actions, action_range=action_range, name="actor"
+            alpha, input_dims, fc1_dims, fc2_dims, fc3_dims, n_actions=n_actions, action_range=action_range, name="actor"
         )
         self.critic = CriticNetwork(
-            beta, input_dims, fc1_dims, fc2_dims, n_actions=n_actions, name="critic"
+            beta, input_dims, fc1_dims, fc2_dims, fc3_dims, n_actions=n_actions, name="critic"
         )
 
         self.target_actor = ActorNetwork(
@@ -47,6 +48,7 @@ class Agent:
             input_dims,
             fc1_dims,
             fc2_dims,
+            fc3_dims,
             n_actions=n_actions,
             action_range=action_range,
             name="target_actor",
@@ -57,6 +59,7 @@ class Agent:
             input_dims,
             fc1_dims,
             fc2_dims,
+            fc3_dims,
             n_actions=n_actions,
             name="target_critic",
         )
