@@ -280,13 +280,15 @@ class Simulation:
     def getMap(self):
 
         while True:
-            self.gx = random.randint(1, 70)  # [m]
-            self.gy = random.randint(1, 70)  # [m]
+            self.gx = random.randint(2, 68)  # [m]
+            self.gy = random.randint(2, 68)  # [m]
 
+            if (self.gx + self.pathDistance > 70 and self.gx - self.pathDistance < 1) and (self.gy + self.pathDistance > 70 and self.gy - self.pathDistance < 1):
+                continue
             self.sx = -1
             self.sy = -1 
 
-            while self.sx < 1 or self.sx > 69 or self.sy < 1 or self.sy > 69:
+            while self.sx < 2 or self.sx > 68 or self.sy < 2 or self.sy > 68:
                 theta = random.random() * math.pi * 2
                 self.sx = self.gx + math.cos(theta) * self.pathDistance
                 self.sy = self.gy + math.sin(theta) * self.pathDistance
@@ -332,10 +334,12 @@ class Simulation:
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
                 if shape == 'box':
-                    wall_length = random.randint(4,10)
+                    wall_length = random.randint(4,6)
                     while True:
-                        x = random.randint(round(min_obstacle_x * 0.95), round(max_obstacle_x * 0.95))
-                        y = random.randint(round(min_obstacle_y * 0.95), round(max_obstacle_y * 0.95))
+                        x_diff = max_obstacle_x - min_obstacle_x
+                        y_diff = max_obstacle_y - min_obstacle_y
+                        x = random.randint(round(min_obstacle_x + x_diff*.1), round(max_obstacle_x - x_diff*.1))
+                        y = random.randint(round(min_obstacle_y + y_diff*.1), round(max_obstacle_y - y_diff*.1))
                         if(x < 70 and x > 0 and y < 70 and y > 0):
                             break
                     ox.append(x)
@@ -552,11 +556,16 @@ class Simulation:
         if path_distance > 7 * self.robot_radius:
             off_path_sparse -= 200
 
+        obstacles = self.getObstacle()
+        too_close = 0
+        if obstacles[0] < 1 or obstacles[1] < 1 or obstacles[2] < 1 or obstacles[3] < 1:
+            too_close = min(obstacles) - 2
+
         win = 1000 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hit = -200 if self.isHittingObstacle() else 0
         theta = -.5 * abs(self.getTheta())
-        # print((hit, off_path, goal, theta, win))
-        return hit + win + off_path_sparse + off_path + goal + theta
+        #print((hit, too_close, off_path, goal, theta, win))
+        return hit + too_close + win + off_path_sparse + off_path + goal + theta
 
     
     def isDone(self):
@@ -632,10 +641,10 @@ class Simulation:
         return math.sqrt((x2-x1)**2 + (y2-y1)**2)
 
     def reset(self):
-        self.sx = random.randint(1, 70)  # [m]
-        self.sy = random.randint(1, 70)  # [m]
-        self.gx = random.randint(1, 70)  # [m]
-        self.gy = random.randint(1, 70)  # [m]
+        self.sx = random.randint(2, 68)  # [m]
+        self.sy = random.randint(2, 68)  # [m]
+        self.gx = random.randint(2, 68)  # [m]
+        self.gy = random.randint(2, 68)  # [m]
         self.pnt2 = 1
         self.theta = [math.pi / 2]
         self.pnt = 0      
@@ -696,10 +705,10 @@ class Simulation:
 def main():
     print(__file__ + " start!!")
             # start and goal position
-    sx = random.randint(1, 69)  # [m]
-    sy = random.randint(1, 69)  # [m]
-    gx = random.randint(1, 69)  # [m]
-    gy = random.randint(1, 69)  # [m]
+    sx = random.randint(3, 67)  # [m]
+    sy = random.randint(3, 67)  # [m]
+    gx = random.randint(3, 67)  # [m]
+    gy = random.randint(3, 67)  # [m]
     grid_size = 2  # [m]
     robot_radius = 1.0  # [m]
     obstacle_count = 5
@@ -712,15 +721,14 @@ def main():
         input_dims=[12],
         tau=0.001,
         batch_size=64,
-        fc1_dims=400,
-        fc2_dims=300,
-        fc3_dims=200,
+        fc1_dims=300,
+        fc2_dims=200,
+        fc3_dims=100,
         n_actions=2,
         action_range=1,
         run_name=sys.argv[1]
     )
-
-
+    agent.load_models()
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))
     np.random.seed(0)
