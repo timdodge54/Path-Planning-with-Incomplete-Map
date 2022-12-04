@@ -246,7 +246,7 @@ class Simulation:
         self.dist_tolerance = 3*robot_radius
         self.pnt = 0
         self.steps = 0
-        self.shapes = ['line']
+        self.shapes = ['box']
         self.pathDistance = 50
         self.cone_angle = 15
         self.getMap()
@@ -331,7 +331,8 @@ class Simulation:
             for i in range(self.obstacle_count):
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
-                if shape == 'line':
+                if shape == 'box':
+                    wall_length = random.randint(4,15)
                     while True:
                         x = normalDistribution(min_obstacle_x, max_obstacle_x)
                         y = normalDistribution(min_obstacle_y, max_obstacle_y)
@@ -341,36 +342,36 @@ class Simulation:
                     oy.append(y)
                     map[x, y] = True
                     direction = random.randint(0, 3)
-                    wall_length = random.randint(4,30)
                     i = 0
-                    if direction == 0: # up
-                        while y < 70 and i < wall_length:
+                    tempY = y
+                    while tempY < 70 and i < wall_length: #Left Wall
+                        i += 1
+                        tempY += 1
+                        ox.append(x)
+                        oy.append(tempY)
+                        map[x, tempY] = True
+                    tempX = x
+                    i = 0
+                    while tempX < 70 and i < wall_length: #Bottom Wall
                             i += 1
-                            y += 1
-                            ox.append(x)
-                            oy.append(y)
-                            map[x, y] = True
-                    if direction == 1: # right
-                        while x < 70 and i < wall_length:
-                            i += 1
-                            x += 1
-                            ox.append(x)
-                            oy.append(y)
-                            map[x, y] = True
-                    if direction == 2: # down
-                        while y > 0 and i < wall_length:
-                            i += 1
-                            y -= 1
-                            ox.append(x)
-                            oy.append(y)
-                            map[x, y] = True
-                    if direction == 3: # left
-                        while x > 0 and i < wall_length:
-                            i += 1
-                            x -= 1
-                            ox.append(x)
-                            oy.append(y)
-                            map[x, y] = True
+                            tempX += 1
+                            ox.append(tempX)
+                            oy.append(tempY)
+                            map[tempX, tempY] = True
+                    i = 0
+                    while tempY > 0 and i < wall_length: # Right Wall
+                        i += 1
+                        tempY -= 1
+                        ox.append(tempX)
+                        oy.append(tempY)
+                        map[tempX, tempY] = True
+                    i = 0
+                    while tempX > 0 and i < wall_length: # Top Wall
+                        i += 1
+                        tempX -= 1
+                        ox.append(tempX)
+                        oy.append(tempY)
+                        map[tempX, tempY] = True
                         
             self.ox = ox
             self.oy = oy
@@ -671,56 +672,61 @@ def main():
     robot_radius = 1.0  # [m]
     obstacle_count = 5
 
+
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
+    for i in range(100):
+        sim.reset()
+        sim.showPath()
+        plt.clf()
 
-    agent = Agent(
-        alpha=0.000025,
-        beta=0.00025,
-        input_dims=[12],
-        tau=0.001,
-        batch_size=64,
-        fc1_dims=400,
-        fc2_dims=300,
-        fc3_dims=200,
-        n_actions=2,
-        action_range=1,
-        run_name=sys.argv[1]
-    )
+    # agent = Agent(
+    #     alpha=0.000025,
+    #     beta=0.00025,
+    #     input_dims=[12],
+    #     tau=0.001,
+    #     batch_size=64,
+    #     fc1_dims=400,
+    #     fc2_dims=300,
+    #     fc3_dims=200,
+    #     n_actions=2,
+    #     action_range=1,
+    #     run_name=sys.argv[1]
+    # )
 
 
-    print(T.cuda.is_available())
-    print(torch.cuda.get_device_name(0))
-    np.random.seed(0)
+    # print(T.cuda.is_available())
+    # print(torch.cuda.get_device_name(0))
+    # np.random.seed(0)
 
-    score_history = []
-    for i in range(1000):
-        done = False
-        score = 0
-        obs = sim.reset()
-        while not done:
-            act = agent.choose_action(obs)
-            new_state, reward, done = sim.step(act)
-            agent.remember(obs, act, reward, new_state, int(done))
-            agent.learn()
-            score += reward
-            obs = new_state
-            if score < -8000:
-                break
+    # score_history = []
+    # for i in range(1000):
+    #     done = False
+    #     score = 0
+    #     obs = sim.reset()
+    #     while not done:
+    #         act = agent.choose_action(obs)
+    #         new_state, reward, done = sim.step(act)
+    #         agent.remember(obs, act, reward, new_state, int(done))
+    #         agent.learn()
+    #         score += reward
+    #         obs = new_state
+    #         if score < -8000:
+    #             break
 
-        score_history.append(score)
-        print(
-            "episode",
-            i,
-            "score %.2f" % score,
-            "100 game average %.2f" % np.mean(score_history[-100:]),
-        )
+    #     score_history.append(score)
+    #     print(
+    #         "episode",
+    #         i,
+    #         "score %.2f" % score,
+    #         "100 game average %.2f" % np.mean(score_history[-100:]),
+    #     )
 
-        if i % 25 == 0:
-            agent.save_models()
-            sim.plot_res(score_history, "Learning Rate Graphs", 2000, int(sys.argv[1]))
-        if i % 5 == 0:
-            sim.showPath()
-            plt.close()
+    #     if i % 25 == 0:
+    #         agent.save_models()
+    #         sim.plot_res(score_history, "Learning Rate Graphs", 2000, int(sys.argv[1]))
+    #     if i % 5 == 0:
+    #         sim.showPath()
+    #         plt.close()
 
 
 
