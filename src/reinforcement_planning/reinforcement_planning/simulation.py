@@ -332,10 +332,10 @@ class Simulation:
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
                 if shape == 'box':
-                    wall_length = random.randint(4,15)
+                    wall_length = random.randint(4,10)
                     while True:
-                        x = normalDistribution(min_obstacle_x, max_obstacle_x)
-                        y = normalDistribution(min_obstacle_y, max_obstacle_y)
+                        x = random.randint(round(min_obstacle_x * 0.95), round(max_obstacle_x * 0.95))
+                        y = random.randint(round(min_obstacle_y * 0.95), round(max_obstacle_y * 0.95))
                         if(x < 70 and x > 0 and y < 70 and y > 0):
                             break
                     ox.append(x)
