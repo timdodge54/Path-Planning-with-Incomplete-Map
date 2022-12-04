@@ -1,5 +1,6 @@
 import math
 import os.path
+import sys
 
 import numpy
 import numpy as np
@@ -513,14 +514,14 @@ class Simulation:
         self.goal_magnitude = numpy.sqrt(gx * gx + gy * gy)
 
         path_distance = numpy.sqrt(x*x + y*y)
-        off_path = (self.robot_radius - path_distance)
+        off_path = 2 * (self.robot_radius - path_distance)
         off_path_sparse = 0
         if path_distance > 7 * self.robot_radius:
             off_path_sparse -= 200
 
         win = 1000 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
         hit = -200 if self.isHittingObstacle() else 0
-        theta = -abs(self.getTheta())
+        theta = -.5 * abs(self.getTheta())
         # print((hit, off_path, goal, theta, win))
         return hit + win + off_path_sparse + off_path + goal + theta
 
@@ -620,7 +621,7 @@ class Simulation:
         obs_1, obs_2, obs_3, obs_4 = self.getObstacle()
         return [path_x, path_y, g_x/goal_distance, g_y/goal_distance, obs_1, obs_2, obs_3, obs_4, self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
 
-    def plot_res(self, values, title='', goal=1000):
+    def plot_res(self, values, title='', goal=1000, run_number=0):
         ''' Plot the reward curve and histogram of results over time.'''
         # Update the window after each episode
         clear_output(wait=True)
@@ -650,8 +651,9 @@ class Simulation:
         ax[1].legend()
 
         dir_name = os.path.dirname(__file__)
+        fig_name = "tmp/LearningPlot_" + str(run_number) + ".png"
         plt.savefig(
-            os.path.join(dir_name, "tmp/LearningPlot.png")
+            os.path.join(dir_name, fig_name)
         )
         plt.close(f)
 
@@ -667,7 +669,7 @@ def main():
     gy = random.randint(1, 69)  # [m]
     grid_size = 2  # [m]
     robot_radius = 1.0  # [m]
-    obstacle_count = 10
+    obstacle_count = 5
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
 
@@ -677,14 +679,15 @@ def main():
         input_dims=[12],
         tau=0.001,
         batch_size=64,
-        fc1_dims=600,
-        fc2_dims=500,
-        fc3_dims=400,
+        fc1_dims=400,
+        fc2_dims=300,
+        fc3_dims=200,
         n_actions=2,
-        action_range=1
+        action_range=1,
+        run_name=sys.argv[1]
     )
 
-    agent.load_models()
+
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))
     np.random.seed(0)
@@ -701,6 +704,8 @@ def main():
             agent.learn()
             score += reward
             obs = new_state
+            if score < -8000:
+                break
 
         score_history.append(score)
         print(
@@ -712,13 +717,11 @@ def main():
 
         if i % 25 == 0:
             agent.save_models()
-            sim.plot_res(score_history, "Learning Rate Graphs", 2000)
+            sim.plot_res(score_history, "Learning Rate Graphs", 2000, int(sys.argv[1]))
         if i % 5 == 0:
             sim.showPath()
             plt.close()
 
-
-    
 
 
 
