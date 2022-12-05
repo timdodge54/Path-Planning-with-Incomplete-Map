@@ -1,18 +1,30 @@
 #! /usr/bin/env python3
-import threading
-import typing
-
+import os
+from rclpy.node import Node
 import rclpy
-import rclpy.callback_groups
+from rclpy.node import Node
 import rclpy.client
 import rclpy.subscription
-from geometry_msgs.msg import PoseStamped
+import rclpy.callback_groups
+from tf_transformations import euler_from_quaternion
+
 from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped
+import typing
+
+import threading
+from ament_index_python import get_package_share_directory
+import yaml
+import math
+
+from geometry_msgs.msg import Twist
+
+import rclpy
 from rclpy.node import Node
+
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from tf_transformations import euler_from_quaternion
 
 
 class Reinforcement_Interface(Node):
@@ -22,18 +34,13 @@ class Reinforcement_Interface(Node):
         plan_sub: The subscription to the plan topic
         plan_array: The array of poses in the plan in the form 
             [x, y, z, roll, pitch, yaw]
-        plan_lock: The lock for limiting access to plan array
-        pose_lock: The lock for limiting access to the current pose
+        _lock: The lock for limiting access to plan array
         goal: The goal of the plan
         current_pose: The current pose of the robot
-        target_frame: The frame that houses the map 
-        tf_buffer: The buffer for the tf listener 
-        tf_listener: The listener for the tf tree
         
     """
 
     def __init__(self):
-        """Initialize."""
         super().__init__("reinforcement_interface")
         self.plan_sub = self.create_subscription(
             "nav_msgs/msg/Path", "/plan", self.plan_callback, 10
@@ -52,8 +59,8 @@ class Reinforcement_Interface(Node):
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.current_pose: typing.Optional[typing.List[float]] = None
 
-    def plan_callback(self, msg: Path) -> None:
-        """Clear plan array and replace with current path.
+    def plan_callback(self, msg) -> None:
+        """Callback for the plan topic
 
         Args:
             msg: The message from the plan topic
@@ -73,7 +80,7 @@ class Reinforcement_Interface(Node):
                 self.plan_array.append(pose_array)
 
     def get_current_pose(self) -> None:
-        """Listen to the tf tree and get the current pose of the robot."""
+        """Listens to the tf tree to get the current pose of the robot."""
         with self.pose_lock:
             from_frame_rel: str = self.target_frame
             to_frame_rel = "base_footprint"

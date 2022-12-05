@@ -1,13 +1,13 @@
-import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import numpy as np
 
 from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
-from OUActionNoise import OUActionNoise
 from ReplayBuffer import ReplayBuffer
+from OUActionNoise import OUActionNoise
 
 
 class Agent:
@@ -18,7 +18,6 @@ class Agent:
         input_dims,
         tau,
         n_actions,
-        action_range,
         gamma=0.99,
         max_size=1000000,
         fc1_dims=400,
@@ -36,7 +35,7 @@ class Agent:
         self.noise = OUActionNoise(mu=np.zeros(n_actions))
 
         self.actor = ActorNetwork(
-            alpha, input_dims, fc1_dims, fc2_dims, n_actions=n_actions, action_range=action_range, name="actor"
+            alpha, input_dims, fc1_dims, fc2_dims, n_actions=n_actions, name="actor"
         )
         self.critic = CriticNetwork(
             beta, input_dims, fc1_dims, fc2_dims, n_actions=n_actions, name="critic"
@@ -48,7 +47,6 @@ class Agent:
             fc1_dims,
             fc2_dims,
             n_actions=n_actions,
-            action_range=action_range,
             name="target_actor",
         )
 
@@ -90,6 +88,7 @@ class Agent:
     def learn(self):
         if self.memory.mem_cntr < self.batch_size:
             return
+
         states, actions, rewards, states_, done = self.memory.sample_buffer(
             self.batch_size
         )

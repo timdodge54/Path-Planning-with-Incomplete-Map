@@ -47,6 +47,9 @@ install(PROGRAMS
 install(DIRECTORY
   config
   DESTINATION share/${PROJECT_NAME}/)
+install(DIRECTORY
+  worlds
+  DESTINATION share/${PROJECT_NAME}/)
 
 install(DIRECTORY
   launch

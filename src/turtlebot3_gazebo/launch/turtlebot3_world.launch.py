@@ -22,20 +22,6 @@ from launch.substitutions import LaunchConfiguration
 TURTLEBOT3_MODEL = os.environ["TURTLEBOT3_MODEL"]
 
 
-def gen_robot_list(number_of_robots):
-
-    robots = []
-
-    for i in range(number_of_robots):
-        robot_name = "turtlbot" + str(i)
-        x_pos = float(i)
-        robots.append(
-            {"name": robot_name, "x_pose": x_pos, "y_pose": 0.0, "z_pose": 0.01}
-        )
-
-    return robots
-
-
 def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
     world_file_name = "turtlebot3_worlds/" + TURTLEBOT3_MODEL + ".model"
