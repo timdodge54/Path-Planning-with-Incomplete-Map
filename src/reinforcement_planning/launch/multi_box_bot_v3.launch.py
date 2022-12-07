@@ -31,4 +31,4 @@ def generate_launch_description():
     #     )
     # )
 
-    return LaunchDescription([start_world,]) #spawn_robot_world])
+    return LaunchDescription([start_world])#, spawn_robot_world])
