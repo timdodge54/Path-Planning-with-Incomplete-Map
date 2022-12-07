@@ -16,8 +16,8 @@ TURTLEBOT3_MODEL = os.environ["TURTLEBOT3_MODEL"]
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
-    urdf_file_name = "turtlebot3_" + TURTLEBOT3_MODEL + ".urdf"
-    world_file_name = "empty_world.model"
+    urdf_file_name = "turtlebot3_burger.sdf"
+    world_file_name = "2empty_world.model"
     world = os.path.join(
         get_package_share_directory("reinforcement_planning"), "worlds", world_file_name
     )
@@ -29,6 +29,9 @@ def generate_launch_description():
     urdf = os.path.join(
         get_package_share_directory("turtlebot3_description"), "urdf", urdf_file_name
     )
+    with open(urdf, 'r') as infp:
+        robot_desc = infp.read()
+    print(urdf)
 
     use_sim_time = True
     list_of_robots = []
@@ -39,26 +42,25 @@ def generate_launch_description():
         name=f"robot_state_publisher",
         namespace=f"turtlebot",
         output="screen",
-        parameters=[{"use_sim_time": use_sim_time}],
-        arguments=[urdf],
+        parameters=[{"use_sim_time": use_sim_time, "robot_description":robot_desc}],
     )
     list_of_robots.append(pub)
 
-    ld0 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, "launch", "gzserver.launch.py")
-        ),
-        launch_arguments={"world": world}.items(),
-    )
-    print("made it 68")
+    # ld0 = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(pkg_gazebo_ros, "launch", "gzserver.launch.py")
+    #     ),
+    #     launch_arguments={"world": world}.items(),
+    # )
+    # print("made it 68")
 
-    ld1 = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_gazebo_ros, "launch", "gzclient.launch.py")
-        )
-    )
-    list_of_robots.append(ld0)
-    print("made it 76")
-    list_of_robots.append(ld1)
-    print("made it 78")
+    # ld1 = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(pkg_gazebo_ros, "launch", "gzclient.launch.py")
+    #     )
+    # )
+    # list_of_robots.append(ld0)
+    # print("made it 76")
+    # list_of_robots.append(ld1)
+    # print("made it 78")
     return LaunchDescription(list_of_robots)

@@ -14,12 +14,12 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    pkg_box_bot_gazebo = get_package_share_directory("reinforcement_planning")
+    pkg_box_bot_gazebo = get_package_share_directory("turtlebot3_gazebo")
     pkg_box_bot_description = get_package_share_directory("box_bot_description")
 
     start_world = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_box_bot_gazebo, "launch", "launch_robots.launch.py")
+            os.path.join(pkg_box_bot_gazebo, "launch", "turtlebot3_world.launch.py")
         )
     )
 
@@ -31,4 +31,4 @@ def generate_launch_description():
     #     )
     # )
 
-    return LaunchDescription([start_world])#, spawn_robot_world])
+    return LaunchDescription([start_world,]) #spawn_robot_world])
