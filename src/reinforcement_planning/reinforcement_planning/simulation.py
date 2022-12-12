@@ -1,19 +1,16 @@
 import math
-from platform import node
-from queue import PriorityQueue
+import os.path
+import sys
 
 import numpy
 import numpy as np
-import time
 import random
-
+from IPython.display import clear_output
 import torch.cuda
-
-from Agent import Agent
 import torch as T
-
 import matplotlib.pyplot as plt
 
+from Agent import Agent
 show_animation = True
 
 
@@ -229,6 +226,11 @@ class AStarPlanner:
 
         return motion
 
+def normalDistribution(minValue, maxValue):
+    mid = minValue + (maxValue - minValue) / 2
+    std_dev = (maxValue - mid) / 2
+
+    return round(np.random.normal(loc=mid, scale=std_dev))
 
 class Simulation:
     def __init__(self, robot_radius, grid_size, obstacle_count, sx, sy, gx, gy):
@@ -244,7 +246,9 @@ class Simulation:
         self.dist_tolerance = 3*robot_radius
         self.pnt = 0
         self.steps = 0
-        self.shapes = ['line']
+        self.shapes = ['box']
+        self.pathDistance = 50
+        self.cone_angle = 15
         self.getMap()
         self.tx = [sx]
         self.ty = [sy]
@@ -276,10 +280,33 @@ class Simulation:
     def getMap(self):
 
         while True:
-            self.sx = random.randint(1, 70)  # [m]
-            self.sy = random.randint(1, 70)  # [m]
-            self.gx = random.randint(1, 70)  # [m]
-            self.gy = random.randint(1, 70)  # [m]
+            self.gx = random.randint(2, 68)  # [m]
+            self.gy = random.randint(2, 68)  # [m]
+
+            if (self.gx + self.pathDistance > 70 and self.gx - self.pathDistance < 1) and (self.gy + self.pathDistance > 70 and self.gy - self.pathDistance < 1):
+                continue
+            self.sx = -1
+            self.sy = -1 
+
+            while self.sx < 2 or self.sx > 68 or self.sy < 2 or self.sy > 68:
+                theta = random.random() * math.pi * 2
+                self.sx = self.gx + math.cos(theta) * self.pathDistance
+                self.sy = self.gy + math.sin(theta) * self.pathDistance
+
+            if self.gx < self.sx:
+                min_obstacle_x = self.gx
+                max_obstacle_x = self.sx
+            else:
+                min_obstacle_x = self.sx
+                max_obstacle_x = self.gx
+
+            if self.gy < self.sy:
+                min_obstacle_y = self.gy
+                max_obstacle_y = self.sy
+            else:
+                min_obstacle_y = self.sy
+                max_obstacle_y = self.gy   
+
             map = np.zeros((71, 71), dtype=bool)
 
             # set obstacle positions
@@ -306,50 +333,49 @@ class Simulation:
             for i in range(self.obstacle_count):
                 shape_index = random.randint(0, len(self.shapes) - 1)
                 shape = self.shapes[shape_index]
-                if shape == 'line':
+                if shape == 'box':
+                    wall_length = random.randint(4,6)
                     while True:
-                        x = random.randint(0, 70)
-                        y = random.randint(0, 70)
-                        if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
+                        x_diff = max_obstacle_x - min_obstacle_x
+                        y_diff = max_obstacle_y - min_obstacle_y
+                        x = random.randint(round(min_obstacle_x + x_diff*.1), round(max_obstacle_x - x_diff*.1))
+                        y = random.randint(round(min_obstacle_y + y_diff*.1), round(max_obstacle_y - y_diff*.1))
+                        if(x < 70 and x > 0 and y < 70 and y > 0):
                             break
                     ox.append(x)
                     oy.append(y)
                     map[x, y] = True
                     direction = random.randint(0, 3)
-                    wall_length = random.randint(4,10)
                     i = 0
-                    if direction == 0: # up
-                        while y < 70 and i < wall_length:
+                    tempY = y
+                    while tempY < 70 and i < wall_length: #Left Wall
+                        i += 1
+                        tempY += 1
+                        ox.append(x)
+                        oy.append(tempY)
+                        map[x, tempY] = True
+                    tempX = x
+                    i = 0
+                    while tempX < 70 and i < wall_length: #Bottom Wall
                             i += 1
-                            y += 1
-                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                                ox.append(x)
-                                oy.append(y)
-                                map[x, y] = True
-                    if direction == 1: # right
-                        while x < 70 and i < wall_length:
-                            i += 1
-                            x += 1
-                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                                ox.append(x)
-                                oy.append(y)
-                                map[x, y] = True
-                    if direction == 2: # down
-                        while y > 0 and i < wall_length:
-                            i += 1
-                            y -= 1
-                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                                ox.append(x)
-                                oy.append(y)
-                                map[x, y] = True
-                    if direction == 3: # left
-                        while x > 0 and i < wall_length:
-                            i += 1
-                            x -= 1
-                            if (x != self.gx or y != self.gy) and (x != self.sx or y != self.sy):
-                                ox.append(x)
-                                oy.append(y)
-                                map[x, y] = True
+                            tempX += 1
+                            ox.append(tempX)
+                            oy.append(tempY)
+                            map[tempX, tempY] = True
+                    i = 0
+                    while tempY > 0 and i < wall_length: # Right Wall
+                        i += 1
+                        tempY -= 1
+                        ox.append(tempX)
+                        oy.append(tempY)
+                        map[tempX, tempY] = True
+                    i = 0
+                    while tempX > 0 and i < wall_length: # Top Wall
+                        i += 1
+                        tempX -= 1
+                        ox.append(tempX)
+                        oy.append(tempY)
+                        map[tempX, tempY] = True
                         
             self.ox = ox
             self.oy = oy
@@ -384,25 +410,110 @@ class Simulation:
         return goal_vector
 
     def getObstacle(self):
+        max_distance = 10
         obsDistanceforward = 10
         obsDistanceLeft = 10
         obsDistanceRight = 10
+        obsDistanceBack = 10
+
+        obsDistanceConeLeft = 10
+        obsDistanceConeLeft_mid = 10
+        obsDistanceConeRight_mid = 10
+        obsDistanceConeRight = 10
+
         for i in range(10):
             if self.map[round(self.tx[-1] + i * math.cos(self.theta[-1])), round(self.ty[-1] + i * math.sin(self.theta[-1]))]:
                 obsDistanceforward = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(self.theta[-1])), self.iy[-1] + round(i * math.sin(self.theta[-1])))
+            coneTheta_mid = self.theta[-1] - (self.cone_angle / 2 * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta_mid)), round(self.ty[-1] + i * math.sin(coneTheta_mid))]:
+                obsDistanceConeLeft_mid = self.distance(self.tx[-1], self.ty[-1],self.ix[-1] + round(i * math.cos(coneTheta_mid)),self.iy[-1] + round(i * math.sin(coneTheta_mid)))
+            coneTheta = self.theta[-1] - (self.cone_angle * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+            coneTheta_mid = self.theta[-1] + (self.cone_angle / 2 * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta_mid)), round(self.ty[-1] + i * math.sin(coneTheta_mid))]:
+                obsDistanceConeRight_mid = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta_mid)), self.iy[-1] + round(i * math.sin(coneTheta_mid)))
+            coneTheta = self.theta[-1] + (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+            obsDistanceforward = min(obsDistanceforward, obsDistanceConeLeft, obsDistanceConeLeft_mid, obsDistanceConeRight, obsDistanceConeRight_mid)
+            if obsDistanceforward < max_distance:
                 break
+
+        obsDistanceConeLeft = 10
+        obsDistanceConeLeft_mid = 10
+        obsDistanceConeRight_mid = 10
+        obsDistanceConeRight = 10
         for i in range(10):
-            leftTheta = self.theta[-1] - (60 * math.pi / 180) 
+            leftTheta = self.theta[-1] + (90 * math.pi / 180)
             if self.map[round(self.tx[-1] + i * math.cos(leftTheta)), round(self.ty[-1] + i * math.sin(leftTheta))]:
                 obsDistanceLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(leftTheta)), self.iy[-1] + round(i * math.sin(leftTheta)))
+            coneTheta_mid = leftTheta - (self.cone_angle / 2 * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta_mid)), round(self.ty[-1] + i * math.sin(coneTheta_mid))]:
+                obsDistanceConeLeft_mid = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta_mid)), self.iy[-1] + round(i * math.sin(coneTheta_mid)))
+            coneTheta = leftTheta - (self.cone_angle * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+            coneTheta_mid = leftTheta + (self.cone_angle / 2 * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta_mid)), round(self.ty[-1] + i * math.sin(coneTheta_mid))]:
+                obsDistanceConeRight_mid = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta_mid)), self.iy[-1] + round(i * math.sin(coneTheta_mid)))
+            coneTheta = leftTheta + (self.cone_angle * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+            obsDistanceLeft = min(obsDistanceLeft, obsDistanceConeLeft, obsDistanceConeLeft_mid, obsDistanceConeRight, obsDistanceConeRight_mid)
+            if obsDistanceLeft < max_distance:
                 break
+
+        obsDistanceConeLeft = 10
+        obsDistanceConeLeft_mid = 10
+        obsDistanceConeRight_mid = 10
+        obsDistanceConeRight = 10
         for i in range(10):
-            rightTheta = self.theta[-1] + (60 * math.pi / 180) 
+            rightTheta = self.theta[-1] - (90 * math.pi / 180)
             if self.map[round(self.tx[-1] + i * math.cos(rightTheta)), round(self.ty[-1] + i * math.sin(rightTheta))]:
                 obsDistanceRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(rightTheta)), self.iy[-1] + round(i * math.sin(rightTheta)))
+            coneTheta_mid = rightTheta - (self.cone_angle / 2 * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta_mid)), round(self.ty[-1] + i * math.sin(coneTheta_mid))]:
+                obsDistanceConeLeft_mid = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta_mid)), self.iy[-1] + round(i * math.sin(coneTheta_mid)))
+            coneTheta = rightTheta - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+            coneTheta_mid = rightTheta + (self.cone_angle / 2 * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta_mid)), round(self.ty[-1] + i * math.sin(coneTheta_mid))]:
+                obsDistanceConeRight_mid = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta_mid)), self.iy[-1] + round(i * math.sin(coneTheta_mid)))
+            coneTheta = rightTheta + (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+            obsDistanceRight = min(obsDistanceRight, obsDistanceConeLeft, obsDistanceConeLeft_mid, obsDistanceConeRight, obsDistanceConeRight_mid)
+            if obsDistanceRight < max_distance:
                 break
+
+        obsDistanceConeLeft = 10
+        obsDistanceConeLeft_mid = 10
+        obsDistanceConeRight_mid = 10
+        obsDistanceConeRight = 10
+        for i in range(10):
+            backTheta = self.theta[-1] + (180 * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(backTheta)), round(self.ty[-1] + i * math.sin(backTheta))]:
+                obsDistanceBack = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(backTheta)), self.iy[-1] + round(i * math.sin(backTheta)))
+            coneTheta_mid = backTheta - (self.cone_angle / 2 * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta_mid)), round(self.ty[-1] + i * math.sin(coneTheta_mid))]:
+                obsDistanceConeLeft_mid = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta_mid)), self.iy[-1] + round(i * math.sin(coneTheta_mid)))
+            coneTheta = backTheta - (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeLeft = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+            coneTheta_mid = backTheta + (self.cone_angle / 2 * math.pi / 180)
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta_mid)), round(self.ty[-1] + i * math.sin(coneTheta_mid))]:
+                obsDistanceConeRight_mid = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta_mid)), self.iy[-1] + round(i * math.sin(coneTheta_mid)))
+            coneTheta = backTheta + (self.cone_angle * math.pi / 180) 
+            if self.map[round(self.tx[-1] + i * math.cos(coneTheta)), round(self.ty[-1] + i * math.sin(coneTheta))]:
+                obsDistanceConeRight = self.distance(self.tx[-1], self.ty[-1], self.ix[-1] + round(i * math.cos(coneTheta)), self.iy[-1] + round(i * math.sin(coneTheta)))
+            obsDistanceBack = min(obsDistanceBack, obsDistanceConeLeft,obsDistanceConeLeft_mid, obsDistanceConeRight, obsDistanceConeRight_mid)
+            if obsDistanceBack < max_distance:
+                break
+
         # print(f'obstacle Distance: {obsDistance}')
-        return (obsDistanceforward, obsDistanceLeft, obsDistanceRight)
+        return (obsDistanceforward, obsDistanceLeft,  obsDistanceRight, obsDistanceBack)
 
     def isHittingObstacle(self):
         bot_x = round(self.tx[-1])
@@ -434,22 +545,27 @@ class Simulation:
         gx, gy = self.getGoal()
 
         if self.goal_magnitude != None:
-            goal = 400 * (self.goal_magnitude - numpy.sqrt(gx*gx + gy * gy))
+            goal = 125 * (self.goal_magnitude - numpy.sqrt(gx*gx + gy * gy))
         else:
             goal = 0
         self.goal_magnitude = numpy.sqrt(gx * gx + gy * gy)
 
         path_distance = numpy.sqrt(x*x + y*y)
-        off_path = (self.robot_radius - path_distance)
-        if path_distance > 5 * self.robot_radius:
-            off_path -= 400
+        off_path = 2 * (self.robot_radius - path_distance)
+        off_path_sparse = 0
+        if path_distance > 7 * self.robot_radius:
+            off_path_sparse -= 200
 
-        win = 300 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
-        hitting = self.isHittingObstacle()
-        hit = -300 if hitting else 0
-        theta = -5 * abs(self.getTheta())
+        obstacles = self.getObstacle()
+        too_close = 0
+        if obstacles[0] < 1 or obstacles[1] < 1 or obstacles[2] < 1 or obstacles[3] < 1:
+            too_close = min(obstacles) - 2
 
-        return hit + off_path + goal + theta + win
+        win = 1000 if self.distance(self.tx[-1], self.ty[-1], self.gx, self.gy) < self.dist_tolerance else 0
+        hit = -200 if self.isHittingObstacle() else 0
+        theta = -.5 * abs(self.getTheta())
+        #print((hit, too_close, off_path, goal, theta, win))
+        return hit + too_close + win + off_path_sparse + off_path + goal + theta
 
     
     def isDone(self):
@@ -481,8 +597,11 @@ class Simulation:
         self.steps += 1
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
+        goal_distance = np.sqrt(g_x**2 + g_y**2)
         obstacles = self.getObstacle()
-        return [path_x, path_y, g_x, g_y, obstacles[0], obstacles[1], obstacles[2], self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
+
+        return [path_x, path_y, g_x/goal_distance, g_y/goal_distance, obstacles[0], obstacles[1], obstacles[2], obstacles[3], self.getTheta(),  self.tx[-1], self.ty[-1], self.theta[-1]], self.getReward(), self.isDone()
+
 
     def print(self, end=True):
         plt.plot(self.ox, self.oy, ".k")
@@ -494,30 +613,38 @@ class Simulation:
         plt.plot(self.tx, self.ty, "-g")        
 
     def show(self, x, y, theta):
-        self.robot.remove()
-        self.robotAngle.remove()
-        angle = np.linspace( 0 , 2 * np.pi , 150 )
-        radius = self.robot_radius - 0.5
-        xpoints = x + radius * np.cos( angle )
-        ypoints = y + radius * np.sin( angle )
-        self.robot, = plt.plot(xpoints, ypoints, marker = ".", color = 'r')
-        self.robotAngle, = plt.plot(x + radius * math.cos( theta ), y + radius * math.sin( theta ), marker = ".", color = 'b')
+        try:
+            self.robot.remove()
+            self.robotAngle.remove()
+            angle = np.linspace( 0 , 2 * np.pi , 150 )
+            radius = self.robot_radius - 0.5
+            xpoints = x + radius * np.cos( angle )
+            ypoints = y + radius * np.sin( angle )
+            self.robot, = plt.plot(xpoints, ypoints, marker = ".", color = 'r')
+            self.robotAngle, = plt.plot(x + radius * math.cos( theta ), y + radius * math.sin( theta ), marker = ".", color = 'b')
+        except KeyboardInterrupt:
+            print("Visualization Exited")
+            raise KeyboardInterrupt
 
     def showPath(self):
         self.print()
-        for i in range(len(self.tx)):
-            self.show(self.tx[i], self.ty[i], self.theta[i])
-            plt.pause(0.005)
+        try:
+            for i in range(len(self.tx)):
+                self.show(self.tx[i], self.ty[i], self.theta[i])
+                plt.pause(0.005)
+        except KeyboardInterrupt:
+            print("Visualization exited")
+            return
 
 
     def distance(self, x1, y1, x2, y2):
         return math.sqrt((x2-x1)**2 + (y2-y1)**2)
 
     def reset(self):
-        self.sx = random.randint(1, 70)  # [m]
-        self.sy = random.randint(1, 70)  # [m]
-        self.gx = random.randint(1, 70)  # [m]
-        self.gy = random.randint(1, 70)  # [m]
+        self.sx = random.randint(2, 68)  # [m]
+        self.sy = random.randint(2, 68)  # [m]
+        self.gx = random.randint(2, 68)  # [m]
+        self.gy = random.randint(2, 68)  # [m]
         self.pnt2 = 1
         self.theta = [math.pi / 2]
         self.pnt = 0      
@@ -532,34 +659,75 @@ class Simulation:
 
         path_x, path_y = self.getPath()
         g_x, g_y = self.getGoal()
-        obs_1, obs_2, obs_3 = self.getObstacle()
-        return [path_x, path_y, g_x, g_y, obs_1, obs_2, obs_3, self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
+        goal_distance = np.sqrt(g_x**2 + g_y**2)
+        obs_1, obs_2, obs_3, obs_4 = self.getObstacle()
+        return [path_x, path_y, g_x/goal_distance, g_y/goal_distance, obs_1, obs_2, obs_3, obs_4, self.getTheta(), self.ix[-1], self.iy[-1], self.theta[-1]]
+
+    def plot_res(self, values, title='', goal=1000, run_number=0):
+        ''' Plot the reward curve and histogram of results over time.'''
+        # Update the window after each episode
+        clear_output(wait=True)
+
+        # Define the figure
+        f, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+        f.suptitle(title)
+        ax[0].plot(values, label='score per run')
+        ax[0].axhline(goal, c='red', ls='--', label='goal')
+        ax[0].set_xlabel('Episodes')
+        ax[0].set_ylabel('Reward')
+        x = range(len(values))
+        ax[0].legend()
+        # Calculate the trend
+        try:
+            z = np.polyfit(x, values, 1)
+            p = np.poly1d(z)
+            ax[0].plot(x, p(x), "--", label='trend')
+        except:
+            print('')
+
+        # Plot the histogram of results
+        ax[1].hist(values[-50:])
+        ax[1].axvline(goal, c='red', label='goal')
+        ax[1].set_xlabel('Scores per Last 50 Episodes')
+        ax[1].set_ylabel('Frequency')
+        ax[1].legend()
+
+        dir_name = os.path.dirname(__file__)
+        fig_name = "tmp/LearningPlot_" + str(run_number) + ".png"
+        plt.savefig(
+            os.path.join(dir_name, fig_name)
+        )
+        plt.close(f)
+
+
+
 
 def main():
     print(__file__ + " start!!")
             # start and goal position
-    sx = random.randint(1, 69)  # [m]
-    sy = random.randint(1, 69)  # [m]
-    gx = random.randint(1, 69)  # [m]
-    gy = random.randint(1, 69)  # [m]
+    sx = random.randint(3, 67)  # [m]
+    sy = random.randint(3, 67)  # [m]
+    gx = random.randint(3, 67)  # [m]
+    gy = random.randint(3, 67)  # [m]
     grid_size = 2  # [m]
     robot_radius = 1.0  # [m]
-    obstacle_count = 10
+    obstacle_count = 5
 
     sim = Simulation(robot_radius, grid_size, obstacle_count, sx, sy, gx, gy)
 
     agent = Agent(
-    alpha=0.000025,
-    beta=0.00025,
-    input_dims=[11],
-    tau=0.001,
-    batch_size=64,
-    fc1_dims=400,
-    fc2_dims=300,
-    n_actions=2,
-    action_range=1
+        alpha=0.000025,
+        beta=0.00025,
+        input_dims=[12],
+        tau=0.001,
+        batch_size=64,
+        fc1_dims=300,
+        fc2_dims=200,
+        fc3_dims=100,
+        n_actions=2,
+        action_range=1,
+        run_name=sys.argv[1]
     )
-
     agent.load_models()
     print(T.cuda.is_available())
     print(torch.cuda.get_device_name(0))
@@ -573,11 +741,12 @@ def main():
         while not done:
             act = agent.choose_action(obs)
             new_state, reward, done = sim.step(act)
-            agent.remember(obs, act, reward, new_state, int(done))
-            agent.learn()
+            #agent.remember(obs, act, reward, new_state, int(done))
+            #agent.learn()
             score += reward
             obs = new_state
-
+            if score < -8000:
+                break
 
         score_history.append(score)
         print(
@@ -587,11 +756,13 @@ def main():
             "100 game average %.2f" % np.mean(score_history[-100:]),
         )
 
-        if i % 25 == 0:
-            agent.save_models()
-        if i % 5 == 0:
+        # if i % 25 == 0:
+        #     agent.save_models()
+        #     sim.plot_res(score_history, "Learning Rate Graphs", 2000, int(sys.argv[1]))
+        if i % 1 == 0:
             sim.showPath()
             plt.close()
+
 
 
 
