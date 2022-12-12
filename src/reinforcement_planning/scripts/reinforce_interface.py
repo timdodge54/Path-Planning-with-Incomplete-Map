@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+from reinforcement_planning.reinforcement_planning.Agent import Agent
 import os
 from rclpy.node import Node
 import rclpy
@@ -45,6 +46,7 @@ class Reinforcement_Interface(Node):
         self.plan_sub = self.create_subscription(
             "nav_msgs/msg/Path", "/plan", self.plan_callback, 10
         )
+        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.plan_array: typing.List[typing.List[float]] = []
         self.plan_lock = threading.Lock()
         self.pose_lock = threading.Lock()
@@ -58,6 +60,7 @@ class Reinforcement_Interface(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.current_pose: typing.Optional[typing.List[float]] = None
+        self.
 
     def plan_callback(self, msg) -> None:
         """Callback for the plan topic
@@ -106,3 +109,6 @@ class Reinforcement_Interface(Node):
                     f"Could not transform {to_frame_rel} to {from_frame_rel}: {ex}"
                 )
                 return
+        
+        def reinforcement_loop(self) -> None:
+            
