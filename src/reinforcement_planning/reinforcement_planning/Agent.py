@@ -1,13 +1,13 @@
-import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import numpy as np
 
 from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
-from OUActionNoise import OUActionNoise
 from ReplayBuffer import ReplayBuffer
+from OUActionNoise import OUActionNoise
 
 
 class Agent:
@@ -18,7 +18,6 @@ class Agent:
         input_dims,
         tau,
         n_actions,
-        action_range,
         gamma=0.99,
         max_size=1000000,
         fc1_dims=400,
@@ -94,6 +93,7 @@ class Agent:
     def learn(self):
         if self.memory.mem_cntr < self.batch_size:
             return
+
         states, actions, rewards, states_, done = self.memory.sample_buffer(
             self.batch_size
         )

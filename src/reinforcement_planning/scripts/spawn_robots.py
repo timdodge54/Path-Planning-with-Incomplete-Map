@@ -1,15 +1,15 @@
 #! /usr/bin/env python3
 import os
-import threading
-
-import yaml
-
-import rclpy
-from ament_index_python import get_package_share_directory
-from gazebo_msgs.srv import SpawnEntity
-from nav2_msgs.srv import LoadMap
-from nav_msgs.msg import OccupancyGrid
 from rclpy.node import Node
+import rclpy
+
+from nav_msgs.msg import OccupancyGrid
+from nav2_msgs.srv import LoadMap
+from gazebo_msgs.srv import SpawnEntity
+
+import threading
+from ament_index_python import get_package_share_directory
+import yaml
 
 
 class RobotSpawner(Node):

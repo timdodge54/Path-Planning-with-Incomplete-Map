@@ -515,6 +515,95 @@
       <joint_name>wheel_left_joint</joint_name>
       <joint_name>wheel_right_joint</joint_name>
     </plugin>    
+      <collision name='base_footprint_fixed_joint_lump__base_sonar_front_collision_2'>
+        <pose>0.5 0 0.25 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.01</size>
+          </box>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <collision name='base_footprint_fixed_joint_lump__base_sonar_front_collision_3'>
+        <pose>0.515 0 0.2435 0 -0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0315</length>
+            <radius>0.055</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <contact>
+            <ode/>
+          </contact>
+          <friction>
+            <ode/>
+          </friction>
+        </surface>
+      </collision>
+      <visual name='base_footprint_fixed_joint_lump__base_link_visual'>
+        <pose>-0.032 0 0.01 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://turtlebot3_description/meshes/bases/burger_base.stl</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <visual name='base_footprint_fixed_joint_lump__base_sonar_front_visual_1'>
+        <pose>0.5 0 0.25 0 -0 0</pose>
+        <geometry>
+          <box>
+            <size>0.01 0.01 0.01</size>
+          </box>
+        </geometry>
+      </visual>
+      <sensor name='TeraRanger' type='ray'>
+        <visualize>1</visualize>
+        <update_rate>50</update_rate>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>10</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.14835</min_angle>
+              <max_angle>0.14835</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>10</samples>
+              <resolution>1</resolution>
+              <min_angle>-0.14835</min_angle>
+              <max_angle>0.14835</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.01</min>
+            <max>2</max>
+            <resolution>0.02</resolution>
+          </range>
+        </ray>
+        <plugin name='gazebo_ros_range' filename='libgazebo_ros_range.so'>
+          <ros>
+            <remapping>~/out:=/sensor/sonar_front</remapping>
+          </ros>
+          <gaussianNoise>0.005</gaussianNoise>
+          <alwaysOn>1</alwaysOn>
+          <updateRate>50</updateRate>
+          <topicName>sensor/ir_front</topicName>
+          <frameName>base_ir_front</frameName>
+          <radiation>INFRARED</radiation>
+          <fov>0.2967</fov>
+        </plugin>
+        <pose>0.5 0 0.25 0 -0 0</pose>
+      </sensor>
+    </link>
 
   </model>
 </sdf>

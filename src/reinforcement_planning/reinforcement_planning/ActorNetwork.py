@@ -1,9 +1,8 @@
 import os
-
-import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 import torch.optim as optim
 
 
@@ -16,7 +15,6 @@ class ActorNetwork(nn.Module):
         fc2_dims,
         fc3_dims,
         n_actions,
-        action_range,
         name,
         chkpt_dir="Models/ddpg",
     ) -> None:
@@ -27,7 +25,6 @@ class ActorNetwork(nn.Module):
         self.fc2_dims = fc2_dims
         self.fc3_dims = fc3_dims
         self.checkpoint_dir = os.path.join(chkpt_dir, name + "_ddpg")
-        self.action_range = action_range
 
         self.fc1 = nn.Linear(*self.input_dims, fc1_dims)
         f1 = 1 / np.sqrt(self.fc1.weight.data.size()[0])
