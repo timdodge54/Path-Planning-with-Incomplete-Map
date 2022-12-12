@@ -60,7 +60,22 @@ class Reinforcement_Interface(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         self.current_pose: typing.Optional[typing.List[float]] = None
-        self.
+        self.agent = Agent(
+            alpha=0.000025,
+            beta=0.00025,
+            input_dims=[12],
+            tau=0.001,
+            batch_size=64,
+            fc1_dims=300,
+            fc2_dims=200,
+            fc3_dims=100,
+            n_actions=2,
+            action_range=1,
+            run_name=sys.argv[1]
+        )
+        self.agent.load_models()
+        self.agent.eval()
+        self._timer = self.create_timer(0.1, self.reinforcement_loop)
 
     def plan_callback(self, msg) -> None:
         """Callback for the plan topic
@@ -81,6 +96,26 @@ class Reinforcement_Interface(Node):
                 roll, pitch, yaw = euler_from_quaternion(orientation_list)
                 pose_array = [x, y, z, roll, pitch, yaw]
                 self.plan_array.append(pose_array)
+        self.goal = self.plan_array[-1]
+        
+                
+    def calc_closest(self, current_pose: typing.List[float]) -> Twist:
+        """Calculates the closest point to the robot"""
+        current_distance = 0
+        current_closest = []
+        current_next = [] 
+        for i in range(len(self.plan_array) - 1):
+            element = self.plan_array[i]
+            x = element[0]
+            y = element[1]
+            calc = np.sqrt(
+                (x - current_pose[0]) ** 2 + (y - current_pose[1]) ** 2
+                )
+            if calc < current_distance:
+                current_closest = element
+                current_distance = calc
+                current_next = self.plan_array[i+1]
+        return (current_closest, current_next)
 
     def get_current_pose(self) -> None:
         """Listens to the tf tree to get the current pose of the robot."""
@@ -102,13 +137,51 @@ class Reinforcement_Interface(Node):
                 roll, pitch, yaw = euler_from_quaternion(
                     [orien_x, orien_y, orien_z, orien_w]
                 )
-                self.current_pose = [x, y, z, roll, pitch, yaw]
+                return (x, y, yaw)
 
             except TransformException as ex:
                 self.get_logger().info(
                     f"Could not transform {to_frame_rel} to {from_frame_rel}: {ex}"
                 )
-                return
+                raise
+    def calc_heading_dif(
+        self,
+        current_next_plan: typing.List[float],
+        current_position: typing.List[float],
+        current_plan: typing.List[float]) -> float:
+        """Calculates the difference in heading between the robot and the path"""
+        ## x, y, theta
+
+        path_vector = [current_next_plan[0] - current_plan[0], current_next_plan[1] - current_plan[1]]
+        robot_vector = [math.sin(current_position[2]), math.cos(current_position[2])]
         
-        def reinforcement_loop(self) -> None:
+        dot = path_vector[0] * robot_vector[0] + path_vector[1] * robot_vector[1]
+        det = path_vector[0] * robot_vector[1] - path_vector[1] * robot_vector[0]
+        
+        d_theta = math.atan2(det, dot)
+        
+        if d_theta <= math.pi:
+            d_theta *= -1
+        else:
+            d_theta = 2 * math.pi - d_theta
             
+        return d_theta 
+        
+    def reinforcement_loop(self) -> None:
+        pose = self.get_current_pose()
+        next_point, closest_point = self.calc_closest(pose)
+        d_theta = self.calc_heading_dif(next_point, pose, closest_point)
+
+
+
+
+            
+            # obs needs to be array 
+                # obs = [
+                    # unit vector to path (x,y), unit vector to goal (x,y),
+                    # forward ultrasonic sensor, left ultrasonic sensor, 
+                    # right ultrasonic sensor, back ultrasonic sensor,
+                    # difference in heading between robot and path,
+                    # current x, current y, current theta
+                    # ]
+            #act = agent.choose_action(obs)
