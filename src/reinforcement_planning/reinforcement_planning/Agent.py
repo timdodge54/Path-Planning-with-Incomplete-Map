@@ -25,7 +25,7 @@ class Agent:
         fc2_dims=300,
         fc3_dims=200,
         batch_size=64,
-        run_name=0
+        run_name=""
     ):
         self.gamma = gamma
         self.tau = tau

@@ -18,7 +18,7 @@ class ActorNetwork(nn.Module):
         n_actions,
         action_range,
         name,
-        chkpt_dir="tmp/ddpg",
+        chkpt_dir="Models/ddpg",
     ) -> None:
         super(ActorNetwork, self).__init__()
         self.input_dims = input_dims

@@ -741,8 +741,8 @@ def main():
         while not done:
             act = agent.choose_action(obs)
             new_state, reward, done = sim.step(act)
-            agent.remember(obs, act, reward, new_state, int(done))
-            agent.learn()
+            #agent.remember(obs, act, reward, new_state, int(done))
+            #agent.learn()
             score += reward
             obs = new_state
             if score < -8000:
@@ -756,10 +756,10 @@ def main():
             "100 game average %.2f" % np.mean(score_history[-100:]),
         )
 
-        if i % 25 == 0:
-            agent.save_models()
-            sim.plot_res(score_history, "Learning Rate Graphs", 2000, int(sys.argv[1]))
-        if i % 5 == 0:
+        # if i % 25 == 0:
+        #     agent.save_models()
+        #     sim.plot_res(score_history, "Learning Rate Graphs", 2000, int(sys.argv[1]))
+        if i % 1 == 0:
             sim.showPath()
             plt.close()
 

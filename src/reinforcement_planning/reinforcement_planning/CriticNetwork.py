@@ -17,7 +17,7 @@ class CriticNetwork(nn.Module):
         fc3_dims,
         n_actions,
         name,
-        chkpt_dir="tmp/ddpg",
+        chkpt_dir="Models/ddpg",
     ) -> None:
         super(CriticNetwork, self).__init__()
         self.input_dims = input_dims
