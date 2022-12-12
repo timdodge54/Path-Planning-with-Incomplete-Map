@@ -172,6 +172,18 @@ class Reinforcement_Interface(Node):
         next_point, closest_point = self.calc_closest(pose)
         d_theta = self.calc_heading_dif(next_point, pose, closest_point)
 
+        path_vector = [closest_point[0] - pose[0], closest_point[1] - pose[1]]
+        
+        goal_vector = [self.goal[0] - pose[0], self.goal[1] - pose[1]]
+        goal_mag = math.sqrt(goal_vector[0]**2 + goal_vector[1]**2)
+        goal_vector = [goal_vector[0]/goal_mag, goal_vector[1]/goal_mag]
+        
+        act = self.agent.choose_action([path_vector[0], path_vector[1], goal_vector[0], goal_vector[1], d_theta, pose[0], pose[1]])
+
+        velocity = (act[0] + act[1])/ 2
+        
+        theta_dot = (act[1] - act[0]) / (0.287)
+                                
 
 
 
