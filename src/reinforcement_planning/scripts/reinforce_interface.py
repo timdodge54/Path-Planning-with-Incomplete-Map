@@ -28,7 +28,7 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 
 
-class Reinforcement_Interface(Node):
+class ReinforcementInterface(Node):
     """Class that gets plans from the plan server
 
     Attributes:
@@ -97,7 +97,7 @@ class Reinforcement_Interface(Node):
                 pose_array = [x, y, z, roll, pitch, yaw]
                 self.plan_array.append(pose_array)
         self.goal = self.plan_array[-1]
-        
+
                 
     def calc_closest(self, current_pose: typing.List[float]) -> Twist:
         """Calculates the closest point to the robot"""
@@ -117,7 +117,7 @@ class Reinforcement_Interface(Node):
                 current_next = self.plan_array[i+1]
         return (current_closest, current_next)
 
-    def get_current_pose(self) -> None:
+    def get_current_pose(self) -> typing.Tuple[float, float, float]:
         """Listens to the tf tree to get the current pose of the robot."""
         with self.pose_lock:
             from_frame_rel: str = self.target_frame
@@ -183,17 +183,21 @@ class Reinforcement_Interface(Node):
         velocity = (act[0] + act[1])/ 2
         
         theta_dot = (act[1] - act[0]) / (0.287)
-                                
+        msg = Twist()
+        msg.angular.z = theta_dot
+        msg.linear.x = velocity
+        self.cmd_vel_pub.publish(msg)
 
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ReinforcementInterface()
+    rclpy.spin(node)
+
+if __name__ == "__main__":
+    main()
+
+    
 
 
             
-            # obs needs to be array 
-                # obs = [
-                    # unit vector to path (x,y), unit vector to goal (x,y),
-                    # forward ultrasonic sensor, left ultrasonic sensor, 
-                    # right ultrasonic sensor, back ultrasonic sensor,
-                    # difference in heading between robot and path,
-                    # current x, current y, current theta
-                    # ]
-            #act = agent.choose_action(obs)
