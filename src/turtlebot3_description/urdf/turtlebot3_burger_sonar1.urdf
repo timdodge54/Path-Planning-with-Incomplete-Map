@@ -160,23 +160,23 @@
 
   <link name="base_sonar_front">
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0.032 0 0.171" rpy="0 0 0"/>
         <geometry>
           <box size="0.01 0.01 0.01"/>
         </geometry>
       </collision>    <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0.032 0 0.171" rpy="0 0 0"/>
         <geometry>
           <box size="0.01 0.01 0.01"/>
         </geometry>
       </visual>    <inertial>
         <mass value="1e-5" />
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0.032 0 0.171" rpy="0 0 0"/>
         <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
       </inertial>
 
     <collision>
-      <origin xyz="0.015 0 -0.0065" rpy="0 0 0"/>
+      <origin xyz="0.032 0 0.171" rpy="0 0 0"/>
       <geometry>
         <cylinder length="0.0315" radius="0.055"/>
       </geometry>
@@ -184,7 +184,7 @@
 
     <inertial>
       <mass value="0.114" />
-      <origin xyz="0 0 0" />
+      <origin xyz="0.032 0 0.171" />
       <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001" />
     </inertial>
   </link>
@@ -196,7 +196,7 @@
   </joint>
   <gazebo reference="base_sonar_front">        
    <sensor type="ray" name="TeraRanger">
-      <pose>0 0 0 0 0 0</pose>
+      <pose>0.032 0 0.171 0 0 0</pose>
       <visualize>true</visualize>
       <update_rate>50</update_rate>
       <ray>
@@ -235,4 +235,236 @@
    </sensor>  
    </gazebo>
 
+     <link name="base_sonar_left">
+      <collision>
+        <origin xyz="0.025 0.06 0.171" rpy="0 0 1.57"/>
+        <geometry>
+          <box size="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>    <visual>
+        <origin xyz="0.025 0.06 0.171" rpy="0 0 1.57"/>
+        <geometry>
+          <box size="0.01 0.01 0.01"/>
+        </geometry>
+      </visual>    <inertial>
+        <mass value="1e-5" />
+        <origin xyz="0.025 0.06 0.171" rpy="0 0 1.57"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+
+    <collision>
+      <origin xyz="0.025 0.06 0.171" rpy="0 0 1.57"/>
+      <geometry>
+        <cylinder length="0.0315" radius="0.055"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="0.114" />
+      <origin xyz="0 0 0" />
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001" />
+    </inertial>
+  </link>
+  <joint name="sonar_left_joint" type="fixed">
+      <axis xyz="0 1 0" />
+      <origin rpy="0.025 0.06 0.171" xyz="0.5 0 0.25" />
+      <parent link="base_footprint"/>
+      <child link="base_sonar_left"/>
+  </joint>
+  <gazebo reference="base_sonar_left">        
+   <sensor type="ray" name="TeraRanger">
+      <pose>0.025 0.06 0.171 0 0 1.57</pose>
+      <visualize>true</visualize>
+      <update_rate>50</update_rate>
+      <ray>
+         <scan>
+            <horizontal>
+               <samples>10</samples>
+               <resolution>1</resolution> 
+               <min_angle>-0.14835</min_angle>
+               <max_angle>0.14835</max_angle>
+            </horizontal>
+            <vertical>
+               <samples>10</samples>
+               <resolution>1</resolution> 
+               <min_angle>-0.14835</min_angle>
+               <max_angle>0.14835</max_angle> 
+            </vertical>
+         </scan>
+         <range>
+            <min>0.01</min>
+            <max>2</max>
+            <resolution>0.02</resolution>
+         </range>
+      </ray>
+      <plugin filename="libgazebo_ros_range.so" name="gazebo_ros_range">
+        <ros>
+          <remapping>~/out:=/sensor/sonar_left</remapping>
+        </ros>
+         <gaussianNoise>0.005</gaussianNoise>
+         <alwaysOn>true</alwaysOn>
+         <updateRate>50</updateRate>
+         <topicName>sensor/ir_left</topicName>
+         <frameName>base_ir_left</frameName>
+         <radiation>INFRARED</radiation>
+         <fov>0.2967</fov>
+      </plugin>
+   </sensor>  
+   </gazebo>
+
+     <link name="base_sonar_right">
+      <collision>
+        <origin xyz="-0.025 -0.06 0.171" rpy="0 0 4.7"/>
+        <geometry>
+          <box size="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>    <visual>
+        <origin xyz="-0.025 -0.06 0.171" rpy="0 0 4.7"/>
+        <geometry>
+          <box size="0.01 0.01 0.01"/>
+        </geometry>
+      </visual>    <inertial>
+        <mass value="1e-5" />
+        <origin xyz="-0.025 -0.06 0.171" rpy="0 0 4.7"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+
+    <collision>
+      <origin xyz="-0.025 -0.06 0.171" rpy="0 0 4.7"/>
+      <geometry>
+        <cylinder length="0.0315" radius="0.055"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="0.114" />
+      <origin xyz="-0.025 -0.06 0.171" />
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001" />
+    </inertial>
+  </link>
+  <joint name="sonar_right_joint" type="fixed">
+      <axis xyz="-0.025 -0.06 0.171" />
+      <origin rpy="0 0 4.7" xyz="-0.025 -0.06 0.171" />
+      <parent link="base_footprint"/>
+      <child link="base_sonar_right"/>
+  </joint>
+  <gazebo reference="base_sonar_right">        
+   <sensor type="ray" name="TeraRanger">
+      <pose>-0.025 -0.06 0.171 0 0 4.7</pose>
+      <visualize>true</visualize>
+      <update_rate>50</update_rate>
+      <ray>
+         <scan>
+            <horizontal>
+               <samples>10</samples>
+               <resolution>1</resolution> 
+               <min_angle>-0.14835</min_angle>
+               <max_angle>0.14835</max_angle>
+            </horizontal>
+            <vertical>
+               <samples>10</samples>
+               <resolution>1</resolution> 
+               <min_angle>-0.14835</min_angle>
+               <max_angle>0.14835</max_angle> 
+            </vertical>
+         </scan>
+         <range>
+            <min>0.01</min>
+            <max>2</max>
+            <resolution>0.02</resolution>
+         </range>
+      </ray>
+      <plugin filename="libgazebo_ros_range.so" name="gazebo_ros_range">
+        <ros>
+          <remapping>~/out:=/sensor/sonar_right</remapping>
+        </ros>
+         <gaussianNoise>0.005</gaussianNoise>
+         <alwaysOn>true</alwaysOn>
+         <updateRate>50</updateRate>
+         <topicName>sensor/ir_right</topicName>
+         <frameName>base_ir_right</frameName>
+         <radiation>INFRARED</radiation>
+         <fov>0.2967</fov>
+      </plugin>
+   </sensor>  
+   </gazebo>
+
+
+
+    <link name="base_sonar_rear">
+      <collision>
+        <origin xyz="-0.09 0 0.171" rpy="0 0 3.14"/>
+        <geometry>
+          <box size="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>    <visual>
+        <origin xyz="-0.09 0 0.171" rpy="0 0 3.14"/>
+        <geometry>
+          <box size="0.01 0.01 0.01"/>
+        </geometry>
+      </visual>    <inertial>
+        <mass value="1e-5" />
+        <origin xyz="-0.09 0 0.171" rpy="0 0 3.14"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+
+    <collision>
+      <origin xyz="-0.09 0 0.171" rpy="0 0 3.14"/>
+      <geometry>
+        <cylinder length="0.0315" radius="0.055"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="0.114" />
+      <origin xyz="-0.09 0 0.171" />
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001" />
+    </inertial>
+  </link>
+  <joint name="sonar_rear_joint" type="fixed">
+      <axis xyz="-0.09 0 0.171" />
+      <origin rpy="0 0 3.14" xyz="-0.09 0 0.171" />
+      <parent link="base_footprint"/>
+      <child link="base_sonar_rear"/>
+  </joint>
+  <gazebo reference="base_sonar_rear">        
+   <sensor type="ray" name="TeraRanger">
+      <pose>-0.09 0 0.171 0 0 3.14</pose>
+      <visualize>true</visualize>
+      <update_rate>50</update_rate>
+      <ray>
+         <scan>
+            <horizontal>
+               <samples>10</samples>
+               <resolution>1</resolution> 
+               <min_angle>-0.14835</min_angle>
+               <max_angle>0.14835</max_angle>
+            </horizontal>
+            <vertical>
+               <samples>10</samples>
+               <resolution>1</resolution> 
+               <min_angle>-0.14835</min_angle>
+               <max_angle>0.14835</max_angle> 
+            </vertical>
+         </scan>
+         <range>
+            <min>0.01</min>
+            <max>2</max>
+            <resolution>0.02</resolution>
+         </range>
+      </ray>
+      <plugin filename="libgazebo_ros_range.so" name="gazebo_ros_range">
+        <ros>
+          <remapping>~/out:=/sensor/sonar_rear</remapping>
+        </ros>
+         <gaussianNoise>0.005</gaussianNoise>
+         <alwaysOn>true</alwaysOn>
+         <updateRate>50</updateRate>
+         <topicName>sensor/ir_rear</topicName>
+         <frameName>base_ir_rear</frameName>
+         <radiation>INFRARED</radiation>
+         <fov>0.2967</fov>
+      </plugin>
+   </sensor>  
+   </gazebo>
 </robot>
