@@ -4,10 +4,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
-from ActorNetwork import ActorNetwork
-from CriticNetwork import CriticNetwork
-from ReplayBuffer import ReplayBuffer
-from OUActionNoise import OUActionNoise
+from ddpg_planning.ActorNetwork import ActorNetwork
+from ddpg_planning.CriticNetwork import CriticNetwork
+from ddpg_planning.ReplayBuffer import ReplayBuffer
+from ddpg_planning.OUActionNoise import OUActionNoise
 
 
 class Agent:
@@ -24,6 +24,7 @@ class Agent:
         fc2_dims=300,
         fc3_dims=200,
         batch_size=64,
+        action_range = 1,
         run_name=""
     ):
         self.gamma = gamma

@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-from reinforcement_planning.reinforcement_planning.Agent import Agent
+from ddpg_planning.Agent import Agent
 import os
 from rclpy.node import Node
 import rclpy
@@ -8,6 +8,7 @@ import rclpy.client
 import rclpy.subscription
 import rclpy.callback_groups
 from tf_transformations import euler_from_quaternion
+import sys
 
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
@@ -44,7 +45,7 @@ class ReinforcementInterface(Node):
     def __init__(self):
         super().__init__("reinforcement_interface")
         self.plan_sub = self.create_subscription(
-            "nav_msgs/msg/Path", "/plan", self.plan_callback, 10
+            Path, "/plan", self.plan_callback, 10
         )
         self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.plan_array: typing.List[typing.List[float]] = []
@@ -169,15 +170,22 @@ class ReinforcementInterface(Node):
         
     def reinforcement_loop(self) -> None:
         pose = self.get_current_pose()
+        self.get_logger().info(f"Current pose: {pose}")
         next_point, closest_point = self.calc_closest(pose)
+        self.get_logger().info(f"Next point: {next_point}")
+        self.get_logger().info(f"Closest point: {closest_point}")
         d_theta = self.calc_heading_dif(next_point, pose, closest_point)
+        self.get_logger().info(f"Theta: {d_theta}")
 
         path_vector = [closest_point[0] - pose[0], closest_point[1] - pose[1]]
+        self.get_logger().info(f"Path vector: {path_vector}")
         
         goal_vector = [self.goal[0] - pose[0], self.goal[1] - pose[1]]
         goal_mag = math.sqrt(goal_vector[0]**2 + goal_vector[1]**2)
         goal_vector = [goal_vector[0]/goal_mag, goal_vector[1]/goal_mag]
+        self.get_logger().info(f"Goal vector: {goal_vector}")
         
+        raise
         act = self.agent.choose_action([path_vector[0], path_vector[1], goal_vector[0], goal_vector[1], d_theta, pose[0], pose[1]])
 
         velocity = (act[0] + act[1])/ 2
@@ -196,8 +204,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-
-    
-
-
-            

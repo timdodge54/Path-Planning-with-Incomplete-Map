@@ -43,6 +43,10 @@ install(PROGRAMS
   scripts/map_loader.py
   scripts/spawn_robots.py
   DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY
+  ddpg_planning
+  DESTINATION share/${PROJECT_NAME}/
+)
 
 install(DIRECTORY
   config
@@ -55,6 +59,9 @@ install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}/
 )
+install(PROGRAMS
+  scripts/rein_interface.py
+  DESTINATION lib/${PROJECT_NAME})
 
 # uncomment the following section in order to fill in
 # further dependencies manually.

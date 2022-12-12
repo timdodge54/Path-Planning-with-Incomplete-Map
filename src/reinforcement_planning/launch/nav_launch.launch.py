@@ -31,7 +31,7 @@ def generate_launch_description():
     )
 
     nav2_launch_file_dir = os.path.join(
-        get_package_share_directory("nav2_bringup"), "launch"
+        get_package_share_directory("reinforcement_planning"), "launch"
     )
     print(nav2_launch_file_dir)
 

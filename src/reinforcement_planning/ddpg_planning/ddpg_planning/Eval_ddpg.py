@@ -1,9 +1,9 @@
 import gym
 import numpy as np
 
-from Agent import Agent
+from ddpg_planning.Agent import Agent
 
-env = gym.make("LunarLander-v2", continuous=True)
+env = gym.make("LunarLanderContinuous-v2", render_mode="human")
 
 agent = Agent(
     alpha=0.000025,
@@ -15,28 +15,22 @@ agent = Agent(
     fc2_dims=300,
     n_actions=2,
 )
-
-<<<<<<< HEAD
 agent.load_models()
+agent.eval()
 
-=======
-
-print(T.cuda.is_available())
->>>>>>> ad3553ebad8b8b9dc496a9706acb4beb316c08fa
 np.random.seed(0)
 
 score_history = []
-for i in range(1000):
+for i in range(10):
     done = False
     score = 0
     obs = env.reset()[0]
     while not done:
         act = agent.choose_action(obs)
         new_state, reward, done, info, _ = env.step(act)
-        agent.remember(obs, act, reward, new_state, int(done))
-        agent.learn()
         score += reward
         obs = new_state
+        env.render()
 
     score_history.append(score)
     print(
@@ -45,6 +39,3 @@ for i in range(1000):
         "score %.2f" % score,
         "100 game average %.2f" % np.mean(score_history[-100:]),
     )
-
-    if i % 25 == 0:
-        agent.save_models()

@@ -10,7 +10,7 @@ import torch.cuda
 import torch as T
 import matplotlib.pyplot as plt
 
-from Agent import Agent
+from ddpg_planning.Agent import Agent
 show_animation = True
 
 
