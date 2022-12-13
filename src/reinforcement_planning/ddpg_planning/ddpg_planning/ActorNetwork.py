@@ -1,10 +1,13 @@
 import os
+
+import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 import torch.optim as optim
+
 from ament_index_python.packages import get_package_share_directory
+
 
 class ActorNetwork(nn.Module):
     def __init__(
@@ -55,7 +58,7 @@ class ActorNetwork(nn.Module):
         T.nn.init.uniform_(self.mu.bias.data, -f4, f4)
 
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
-        self.device = T.device("cpu")#"cuda:0" if T.cuda.is_available() else "cpu")
+        self.device = T.device("cpu")  # "cuda:0" if T.cuda.is_available() else "cpu")
         print(f"Self device: {self.device}")
         self.to(self.device)
 

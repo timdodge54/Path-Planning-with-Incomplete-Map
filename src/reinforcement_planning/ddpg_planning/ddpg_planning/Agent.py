@@ -1,13 +1,13 @@
+import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import numpy as np
 
 from ddpg_planning.ActorNetwork import ActorNetwork
 from ddpg_planning.CriticNetwork import CriticNetwork
-from ddpg_planning.ReplayBuffer import ReplayBuffer
 from ddpg_planning.OUActionNoise import OUActionNoise
+from ddpg_planning.ReplayBuffer import ReplayBuffer
 
 
 class Agent:
@@ -24,8 +24,8 @@ class Agent:
         fc2_dims=300,
         fc3_dims=200,
         batch_size=64,
-        action_range = 1,
-        run_name=""
+        action_range=1,
+        run_name="",
     ):
         self.gamma = gamma
         self.tau = tau
@@ -38,10 +38,23 @@ class Agent:
         self.noise = OUActionNoise(mu=np.zeros(n_actions))
 
         self.actor = ActorNetwork(
-            alpha, input_dims, fc1_dims, fc2_dims, fc3_dims, n_actions=n_actions, action_range=action_range, name="actor_" + run_name
+            alpha,
+            input_dims,
+            fc1_dims,
+            fc2_dims,
+            fc3_dims,
+            n_actions=n_actions,
+            action_range=action_range,
+            name="actor_" + run_name,
         )
         self.critic = CriticNetwork(
-            beta, input_dims, fc1_dims, fc2_dims, fc3_dims, n_actions=n_actions, name="critic_" + run_name
+            beta,
+            input_dims,
+            fc1_dims,
+            fc2_dims,
+            fc3_dims,
+            n_actions=n_actions,
+            name="critic_" + run_name,
         )
 
         self.target_actor = ActorNetwork(

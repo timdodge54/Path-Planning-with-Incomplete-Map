@@ -16,13 +16,10 @@ agent = Agent(
     n_actions=2,
 )
 
-<<<<<<< HEAD
 agent.load_models()
 
-=======
 
 print(T.cuda.is_available())
->>>>>>> ad3553ebad8b8b9dc496a9706acb4beb316c08fa
 np.random.seed(0)
 
 score_history = []

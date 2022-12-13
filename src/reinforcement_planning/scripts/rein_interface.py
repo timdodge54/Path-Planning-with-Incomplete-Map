@@ -1,36 +1,29 @@
 #! /usr/bin/env python3
-from ddpg_planning.Agent import Agent
-import time
+import math
 import os
-from rclpy.node import Node
-import rclpy
-import rclpy.executors
-from rclpy.node import Node
-import rclpy.client
-import rclpy.subscription
-import rclpy.callback_groups
-from tf_transformations import euler_from_quaternion
 import sys
-import numpy as np
-
-from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped
+import threading
+import time
 import typing
 
-import threading
-from ament_index_python import get_package_share_directory
+import numpy as np
 import yaml
-import math
-from plan_msg.srv import Plan
-
-from geometry_msgs.msg import Twist
 
 import rclpy
+import rclpy.callback_groups
+import rclpy.client
+import rclpy.executors
+import rclpy.subscription
+from ament_index_python import get_package_share_directory
+from ddpg_planning.Agent import Agent
+from geometry_msgs.msg import PoseStamped, Twist
+from nav_msgs.msg import Path
+from plan_msg.srv import Plan
 from rclpy.node import Node
-
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from tf_transformations import euler_from_quaternion
 
 
 class ReinforcementInterface(Node):
@@ -51,7 +44,7 @@ class ReinforcementInterface(Node):
         super().__init__("reinforcement_interface")
         self.plan_cli = self.create_client(Plan, "/paths")
         while not self.plan_cli.wait_for_service(1):
-            self.get_logger().warn("Route Manager service not available ...") 
+            self.get_logger().warn("Route Manager service not available ...")
         self.plan_array = []
         self.plan_lock = threading.Lock()
         self.pose_lock = threading.Lock()
@@ -81,7 +74,7 @@ class ReinforcementInterface(Node):
             fc3_dims=100,
             n_actions=2,
             action_range=1,
-            run_name="2"
+            run_name="2",
         )
         self.agent.load_models()
         self.agent.eval()
@@ -98,7 +91,7 @@ class ReinforcementInterface(Node):
             fut = self.plan_cli.call_async(req)
             rclpy.spin_until_future_complete(self, fut)
             res = fut.result()
-            poses: typing.List[PoseStamped] = res.poses 
+            poses: typing.List[PoseStamped] = res.poses
             self.get_logger().info("Got plan")
             req.dummy = True
             self.plan_array.clear()
@@ -116,23 +109,20 @@ class ReinforcementInterface(Node):
             self.goal = self.plan_array[-1]
             self.initilized = True
 
-                
     def calc_closest(self, current_pose: typing.Tuple[float, float, float]) -> Twist:
         """Calculates the closest point to the robot"""
         current_distance = np.inf
         current_closest = []
-        current_next = [] 
+        current_next = []
         for i in range(len(self.plan_array) - 1):
             element = self.plan_array[i]
             x = element[0]
             y = element[1]
-            calc = np.sqrt(
-                (x - current_pose[0]) ** 2 + (y - current_pose[1]) ** 2
-                )
+            calc = np.sqrt((x - current_pose[0]) ** 2 + (y - current_pose[1]) ** 2)
             if calc < current_distance:
                 current_closest = element
                 current_distance = calc
-                current_next = self.plan_array[i+1]
+                current_next = self.plan_array[i + 1]
         return (current_closest, current_next)
 
     def get_current_pose(self) -> typing.Tuple[float, float, float]:
@@ -162,29 +152,34 @@ class ReinforcementInterface(Node):
                     f"Could not transform {to_frame_rel} to {from_frame_rel}: {ex}"
                 )
                 raise
+
     def calc_heading_dif(
         self,
         current_next_plan: typing.Tuple[float, float, float],
         current_position: typing.Tuple[float, float, float],
-        current_plan: typing.List[float]) -> float:
+        current_plan: typing.List[float],
+    ) -> float:
         """Calculates the difference in heading between the robot and the path"""
         ## x, y, theta
 
-        path_vector = [current_next_plan[0] - current_plan[0], current_next_plan[1] - current_plan[1]]
+        path_vector = [
+            current_next_plan[0] - current_plan[0],
+            current_next_plan[1] - current_plan[1],
+        ]
         robot_vector = [math.sin(current_position[2]), math.cos(current_position[2])]
-        
+
         dot = path_vector[0] * robot_vector[0] + path_vector[1] * robot_vector[1]
         det = path_vector[0] * robot_vector[1] - path_vector[1] * robot_vector[0]
-        
+
         d_theta = math.atan2(det, dot)
-        
+
         if d_theta <= math.pi:
             d_theta *= -1
         else:
             d_theta = 2 * math.pi - d_theta
-            
-        return d_theta 
-        
+
+        return d_theta
+
     def reinforcement_loop(self) -> None:
         """The action loop for the reinforcement learing model.
         
@@ -201,17 +196,27 @@ class ReinforcementInterface(Node):
 
         path_vector = [closest_point[0] - pose[0], closest_point[1] - pose[1]]
         self.get_logger().info(f"Path vector: {path_vector}")
-        
-        goal_vector = [self.goal[0] - pose[0], self.goal[1] - pose[1]]
-        goal_mag = math.sqrt(goal_vector[0]**2 + goal_vector[1]**2)
-        goal_vector = [goal_vector[0]/goal_mag, goal_vector[1]/goal_mag]
-        self.get_logger().info(f"Goal vector: {goal_vector}")
-        
-        raise
-        act = self.agent.choose_action([path_vector[0], path_vector[1], goal_vector[0], goal_vector[1], d_theta, pose[0], pose[1]])
 
-        velocity = (act[0] + act[1])/ 2
-        
+        goal_vector = [self.goal[0] - pose[0], self.goal[1] - pose[1]]
+        goal_mag = math.sqrt(goal_vector[0] ** 2 + goal_vector[1] ** 2)
+        goal_vector = [goal_vector[0] / goal_mag, goal_vector[1] / goal_mag]
+        self.get_logger().info(f"Goal vector: {goal_vector}")
+
+        raise
+        act = self.agent.choose_action(
+            [
+                path_vector[0],
+                path_vector[1],
+                goal_vector[0],
+                goal_vector[1],
+                d_theta,
+                pose[0],
+                pose[1],
+            ]
+        )
+
+        velocity = (act[0] + act[1]) / 2
+
         theta_dot = (act[1] - act[0]) / (0.287)
         msg = Twist()
         msg.angular.z = theta_dot
@@ -225,6 +230,7 @@ def main(args=None):
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(node)
     executor.spin()
+
 
 if __name__ == "__main__":
     main()

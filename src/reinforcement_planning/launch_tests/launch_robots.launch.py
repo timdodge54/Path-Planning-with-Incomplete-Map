@@ -2,14 +2,14 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import Node
 from launch.actions import (
-    IncludeLaunchDescription,
     DeclareLaunchArgument,
     ExecuteProcess,
+    IncludeLaunchDescription,
 )
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 TURTLEBOT3_MODEL = os.environ["TURTLEBOT3_MODEL"]
 
@@ -29,7 +29,7 @@ def generate_launch_description():
     urdf = os.path.join(
         get_package_share_directory("turtlebot3_description"), "urdf", urdf_file_name
     )
-    with open(urdf, 'r') as infp:
+    with open(urdf, "r") as infp:
         robot_desc = infp.read()
     print(urdf)
 
@@ -42,7 +42,7 @@ def generate_launch_description():
         name=f"robot_state_publisher",
         namespace=f"turtlebot",
         output="screen",
-        parameters=[{"use_sim_time": use_sim_time, "robot_description":robot_desc}],
+        parameters=[{"use_sim_time": use_sim_time, "robot_description": robot_desc}],
     )
     list_of_robots.append(pub)
 

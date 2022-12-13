@@ -1,9 +1,11 @@
 import os
+
+import numpy as np
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 import torch.optim as optim
+
 from ament_index_python.packages import get_package_share_directory
 
 
@@ -55,7 +57,7 @@ class CriticNetwork(nn.Module):
         T.nn.init.uniform_(self.q.bias.data, -f4, f4)
 
         self.optimizer = optim.Adam(self.parameters(), lr=beta)
-        self.device = T.device("cpu")#"cuda:0" if T.cuda.is_available() else "cpu")
+        self.device = T.device("cpu")  # "cuda:0" if T.cuda.is_available() else "cpu")
 
         self.to(self.device)
 
