@@ -15,6 +15,7 @@ class ActorNetwork(nn.Module):
         fc2_dims,
         fc3_dims,
         n_actions,
+        action_range,
         name,
         chkpt_dir="Models/ddpg",
     ) -> None:
@@ -24,6 +25,7 @@ class ActorNetwork(nn.Module):
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
         self.fc3_dims = fc3_dims
+        self.action_range = action_range
         self.checkpoint_dir = os.path.join(chkpt_dir, name + "_ddpg")
 
         self.fc1 = nn.Linear(*self.input_dims, fc1_dims)

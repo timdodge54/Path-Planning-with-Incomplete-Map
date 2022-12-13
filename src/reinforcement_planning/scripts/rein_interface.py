@@ -100,7 +100,7 @@ class ReinforcementInterface(Node):
         self.goal = self.plan_array[-1]
 
                 
-    def calc_closest(self, current_pose: typing.List[float]) -> Twist:
+    def calc_closest(self, current_pose: typing.Tuple[float, float, float]) -> Twist:
         """Calculates the closest point to the robot"""
         current_distance = 0
         current_closest = []
@@ -147,8 +147,8 @@ class ReinforcementInterface(Node):
                 raise
     def calc_heading_dif(
         self,
-        current_next_plan: typing.List[float],
-        current_position: typing.List[float],
+        current_next_plan: typing.Tuple[float, float, float],
+        current_position: typing.Tuple[float, float, float],
         current_plan: typing.List[float]) -> float:
         """Calculates the difference in heading between the robot and the path"""
         ## x, y, theta
