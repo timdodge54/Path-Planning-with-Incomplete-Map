@@ -8,7 +8,7 @@
 - [ ] source ros2 installation
 - [ ] run colcon `colcon build --symlink install`
 - [ ] source local install `. install/local_setup.bash`
-- [ ] run launch file for gazebo, robot state publisher and static frame publisher `ros2 launch reinforcement_planning multi_box_bot_v3.launch.py`
+- [ ] run launch file for gazebo, robot state publisher and static frame publisher `ros2 launch reinforcement_planning gazebo_robot.launch.py`
 - [ ] wait for gazebo to fully launch
 - [ ] run launch file for path planner and path saver `ros2 launch reinforcement_planning nav_launch.launch.py`
 - [ ] set nav goal in rviz
