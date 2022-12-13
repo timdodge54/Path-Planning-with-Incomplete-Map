@@ -48,6 +48,7 @@ class PlanSaver(Node):
             None
         """
         super().__init__("plan_saver")
+        self._lock = threading.Lock()
         self.plan_sub = self.create_subscription(
             Path, "/plan", self.plan_callback, 10
         )
@@ -60,9 +61,10 @@ class PlanSaver(Node):
         Args:
             msg: The message received from the plan topic
         """
-        self.plan = msg.poses
-        self.get_logger().info("Plan received")
-        self.get_logger().info(f"{self.plan}")
+        with self._lock:
+            self.plan = msg.poses
+            self.get_logger().info("Plan received")
+            self.get_logger().info(f"{self.plan}")
     
     def plan_cb(self, req: Plan.Request, res: Plan.Response):
         """Callback to send the saved plan.
@@ -71,8 +73,9 @@ class PlanSaver(Node):
             req: a dummy request that is not utilized
             res: the plan to be sent to the client
         """
-        res.poses = self.plan
-        return res
+        with self._lock:
+            res.poses = self.plan
+            return res
 
 def main(args=None):
     rclpy.init(args=args)
