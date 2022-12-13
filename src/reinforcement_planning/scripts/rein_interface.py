@@ -47,6 +47,7 @@ class ReinforcementInterface(Node):
     """
 
     def __init__(self):
+        """Initialize."""
         super().__init__("reinforcement_interface")
         self.plan_cli = self.create_client(Plan, "/paths")
         while not self.plan_cli.wait_for_service(1):
@@ -55,7 +56,7 @@ class ReinforcementInterface(Node):
         self.plan_lock = threading.Lock()
         self.pose_lock = threading.Lock()
         self.goal: typing.Optional[typing.List[float]] = None
-        self.plan_callback()
+        self.plan_request()
 
         self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self.initilized = False
@@ -86,8 +87,8 @@ class ReinforcementInterface(Node):
         self.agent.eval()
         self._timer = self.create_timer(0.1, self.reinforcement_loop)
 
-    def plan_callback(self) -> None:
-        """Callback for the plan topic
+    def plan_request(self) -> None:
+        """Request plan from plan saver.
 
         Args:
             msg: The message from the plan topic
@@ -100,11 +101,9 @@ class ReinforcementInterface(Node):
             poses: typing.List[PoseStamped] = res.poses 
             self.get_logger().info("Got plan")
             req.dummy = True
-            self.get_logger().info("Got plan")
             self.plan_array.clear()
             for i in range(len(poses)):
                 pose: PoseStamped = poses[i]
-                self.get_logger().info(f"Got pose {pose}")
                 x = pose.pose.position.x
                 y = pose.pose.position.y
                 z = pose.pose.position.z
@@ -112,7 +111,6 @@ class ReinforcementInterface(Node):
                 orientation_list = [orient.x, orient.y, orient.z, orient.w]
                 roll, pitch, yaw = euler_from_quaternion(orientation_list)
                 pose_array = [x, y, z, roll, pitch, yaw]
-                self.get_logger().info(f"Got pose array {pose_array}")
                 self.plan_array.append(pose_array)
             self.get_logger().info(f"Got plan array len {len(self.plan_array)}")
             self.goal = self.plan_array[-1]
@@ -188,6 +186,11 @@ class ReinforcementInterface(Node):
         return d_theta 
         
     def reinforcement_loop(self) -> None:
+        """The action loop for the reinforcement learing model.
+        
+        Args:
+            None
+        """
         pose = self.get_current_pose()
         self.get_logger().info(f"Current pose: {pose}")
         next_point, closest_point = self.calc_closest(pose)
