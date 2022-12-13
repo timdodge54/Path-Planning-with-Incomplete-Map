@@ -4,7 +4,8 @@ import typing
 
 import rclpy
 import rclpy.callback_groups
-import rclpy.client
+import rclpy.service
+import rclpy.subscription
 import rclpy.executors
 import rclpy.subscription
 from geometry_msgs.msg import PoseStamped
@@ -30,9 +31,9 @@ class PlanSaver(Node):
         """
         super().__init__("plan_saver")
         self._lock = threading.Lock()
-        self.plan_sub = self.create_subscription(Path, "/plan", self.plan_callback, 10)
+        self.plan_sub: rclpy.subscription = self.create_subscription(Path, "/plan", self.plan_callback, 10)
         self.plan: typing.Optional(typing.List[PoseStamped]) = None
-        self.plan_server = self.create_service(Plan, "/paths", self.plan_cb)
+        self.plan_server: rclpy.service = self.create_service(Plan, "/paths", self.plan_cb)
 
     def plan_callback(self, msg: Path):
         """Callback for the plan subscription.

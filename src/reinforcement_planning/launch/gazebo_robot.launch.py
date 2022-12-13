@@ -22,12 +22,12 @@ def generate_launch_description():
         )
     )
 
-    # spawn_robot_world = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(
-    #             pkg_box_bot_description, "launch", "multi_spawn_robot_v3.launch.py"
-    #         )
-    #     )
-    # )
+    spawn_robot_world = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                pkg_box_bot_description, "launch", "multi_spawn_robot_v3.launch.py"
+            )
+        )
+    )
 
-    return LaunchDescription([start_world])  # , spawn_robot_world])
+    return LaunchDescription([start_world  , spawn_robot_world])
