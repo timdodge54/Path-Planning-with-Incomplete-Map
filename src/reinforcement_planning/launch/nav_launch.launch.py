@@ -38,6 +38,7 @@ def generate_launch_description():
     rviz_config_dir = os.path.join(
         get_package_share_directory("nav2_bringup"), "rviz", "nav2_default_view.rviz"
     )
+    print(map_dir)
 
 
     return LaunchDescription(
@@ -75,5 +76,11 @@ def generate_launch_description():
                 parameters=[{"use_sim_time": use_sim_time}],
                 output="screen",
             ),
+            Node(
+                package="reinforcement_planning",
+                executable="plan_saver.py",
+                name="plan_saver",
+                output="screen",
+            )
         ]
     )

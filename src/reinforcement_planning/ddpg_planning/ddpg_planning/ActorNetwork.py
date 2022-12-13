@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import torch.optim as optim
-
+from ament_index_python.packages import get_package_share_directory
 
 class ActorNetwork(nn.Module):
     def __init__(
@@ -26,7 +26,10 @@ class ActorNetwork(nn.Module):
         self.fc2_dims = fc2_dims
         self.fc3_dims = fc3_dims
         self.action_range = action_range
-        self.checkpoint_dir = os.path.join(chkpt_dir, name + "_ddpg")
+        rel_path = get_package_share_directory("reinforcement_planning")
+        rel_path = os.path.join(rel_path, "ddpg_planning")
+        placehoder_dir = os.path.join(chkpt_dir, name + "_ddpg")
+        self.checkpoint_dir = os.path.join(rel_path, placehoder_dir)
 
         self.fc1 = nn.Linear(*self.input_dims, fc1_dims)
         f1 = 1 / np.sqrt(self.fc1.weight.data.size()[0])
@@ -52,7 +55,8 @@ class ActorNetwork(nn.Module):
         T.nn.init.uniform_(self.mu.bias.data, -f4, f4)
 
         self.optimizer = optim.Adam(self.parameters(), lr=alpha)
-        self.device = T.device("cuda:0" if T.cuda.is_available() else "cpu")
+        self.device = T.device("cpu")#"cuda:0" if T.cuda.is_available() else "cpu")
+        print(f"Self device: {self.device}")
         self.to(self.device)
 
     def forward(self, state):
@@ -74,4 +78,4 @@ class ActorNetwork(nn.Module):
 
     def load_checkpoint(self):
         print("...loading checkpoint...")
-        self.load_state_dict(T.load(self.checkpoint_dir))
+        self.load_state_dict(T.load(self.checkpoint_dir, map_location=self.device))

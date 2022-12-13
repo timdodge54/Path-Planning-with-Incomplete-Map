@@ -1,0 +1,4 @@
+bool dummy
+---
+
+geometry_msgs/PoseStamped[] poses

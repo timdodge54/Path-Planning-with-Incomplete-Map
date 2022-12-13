@@ -1,14 +1,17 @@
 #! /usr/bin/env python3
 from ddpg_planning.Agent import Agent
+import time
 import os
 from rclpy.node import Node
 import rclpy
+import rclpy.executors
 from rclpy.node import Node
 import rclpy.client
 import rclpy.subscription
 import rclpy.callback_groups
 from tf_transformations import euler_from_quaternion
 import sys
+import numpy as np
 
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped
@@ -18,6 +21,7 @@ import threading
 from ament_index_python import get_package_share_directory
 import yaml
 import math
+from plan_msg.srv import Plan
 
 from geometry_msgs.msg import Twist
 
@@ -44,16 +48,20 @@ class ReinforcementInterface(Node):
 
     def __init__(self):
         super().__init__("reinforcement_interface")
-        self.plan_sub = self.create_subscription(
-            Path, "/plan", self.plan_callback, 10
-        )
-        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", 10)
-        self.plan_array: typing.List[typing.List[float]] = []
+        self.plan_cli = self.create_client(Plan, "/paths")
+        while not self.plan_cli.wait_for_service(1):
+            self.get_logger().warn("Route Manager service not available ...") 
+        self.plan_array = []
         self.plan_lock = threading.Lock()
         self.pose_lock = threading.Lock()
         self.goal: typing.Optional[typing.List[float]] = None
+        self.plan_callback()
+
+        self.cmd_vel_pub = self.create_publisher(Twist, "/cmd_vel", 10)
+        self.initilized = False
+
         self.target_frame = (
-            self.declare_parameter("target_frame", "/map")
+            self.declare_parameter("target_frame", "map")
             .get_parameter_value()
             .string_value
         )
@@ -72,23 +80,31 @@ class ReinforcementInterface(Node):
             fc3_dims=100,
             n_actions=2,
             action_range=1,
-            run_name=sys.argv[1]
+            run_name="2"
         )
         self.agent.load_models()
         self.agent.eval()
         self._timer = self.create_timer(0.1, self.reinforcement_loop)
 
-    def plan_callback(self, msg) -> None:
+    def plan_callback(self) -> None:
         """Callback for the plan topic
 
         Args:
             msg: The message from the plan topic
         """
         with self.plan_lock:
+            req = Plan.Request()
+            fut = self.plan_cli.call_async(req)
+            rclpy.spin_until_future_complete(self, fut)
+            res = fut.result()
+            poses: typing.List[PoseStamped] = res.poses 
+            self.get_logger().info("Got plan")
+            req.dummy = True
+            self.get_logger().info("Got plan")
             self.plan_array.clear()
-            poses: typing.List[PoseStamped] = msg.poses
             for i in range(len(poses)):
                 pose: PoseStamped = poses[i]
+                self.get_logger().info(f"Got pose {pose}")
                 x = pose.pose.position.x
                 y = pose.pose.position.y
                 z = pose.pose.position.z
@@ -96,13 +112,16 @@ class ReinforcementInterface(Node):
                 orientation_list = [orient.x, orient.y, orient.z, orient.w]
                 roll, pitch, yaw = euler_from_quaternion(orientation_list)
                 pose_array = [x, y, z, roll, pitch, yaw]
+                self.get_logger().info(f"Got pose array {pose_array}")
                 self.plan_array.append(pose_array)
-        self.goal = self.plan_array[-1]
+            self.get_logger().info(f"Got plan array len {len(self.plan_array)}")
+            self.goal = self.plan_array[-1]
+            self.initilized = True
 
                 
     def calc_closest(self, current_pose: typing.Tuple[float, float, float]) -> Twist:
         """Calculates the closest point to the robot"""
-        current_distance = 0
+        current_distance = np.inf
         current_closest = []
         current_next = [] 
         for i in range(len(self.plan_array) - 1):
@@ -122,7 +141,7 @@ class ReinforcementInterface(Node):
         """Listens to the tf tree to get the current pose of the robot."""
         with self.pose_lock:
             from_frame_rel: str = self.target_frame
-            to_frame_rel = "base_footprint"
+            to_frame_rel = "odom"
 
             try:
                 current_pose = self.tf_buffer.lookup_transform(
@@ -200,7 +219,9 @@ class ReinforcementInterface(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ReinforcementInterface()
-    rclpy.spin(node)
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(node)
+    executor.spin()
 
 if __name__ == "__main__":
     main()

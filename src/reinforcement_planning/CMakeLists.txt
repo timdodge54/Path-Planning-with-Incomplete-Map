@@ -61,6 +61,7 @@ install(DIRECTORY
 )
 install(PROGRAMS
   scripts/rein_interface.py
+  scripts/plan_saver.py
   DESTINATION lib/${PROJECT_NAME})
 
 # uncomment the following section in order to fill in
