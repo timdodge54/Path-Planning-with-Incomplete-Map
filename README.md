@@ -6,7 +6,7 @@
 - [ ] run the following command from root of ws `rosdep install --from-paths src -y --ignore-src`
 - [ ] install catkin_pkg `pip install catkin_pkg`
 - [ ] source ros2 installation
-- [ ] run colcon `colcon build --symlink install`
+- [ ] run colcon `colcon build --symlink-install`
 - [ ] source local install `. install/local_setup.bash`
 - [ ] run launch file for gazebo, robot state publisher and static frame publisher `ros2 launch reinforcement_planning gazebo_robot.launch.py`
 - [ ] wait for gazebo to fully launch
