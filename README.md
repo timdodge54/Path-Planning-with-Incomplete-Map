@@ -33,4 +33,14 @@
 </figure>
 <!-- blank line -->
 
-# High Fidelity trained Reinforcement Learning Model following the path
+# Explination of Code
+
+<!-- blank line -->
+<figure class="video_container">
+  <video controls="true" allowfullscreen="true" poster="video/high.png">
+    <source src="video/high.mkv" type="video/mkv">
+<!--   <source src="path/to/video.ogg" type="video/ogg"> -->
+<!--   <source src="path/to/video.webm" type="video/webm"> -->
+  </video>
+</figure>
+<!-- blank line -->
