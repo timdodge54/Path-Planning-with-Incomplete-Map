@@ -21,3 +21,16 @@
   - src contains cpp code
   - scripts contains python ros code
   - ddpg_planning is a nested python package that will contain reinforcment learning python code
+
+# Low Fidelity trained Reinforcement Learning Model following the path
+<!-- blank line -->
+<figure class="video_container">
+  <video controls="true" allowfullscreen="true" poster="video/low.png">
+    <source src="video/low.mp4" type="video/mp4">
+<!--   <source src="path/to/video.ogg" type="video/ogg"> -->
+<!--   <source src="path/to/video.webm" type="video/webm"> -->
+  </video>
+</figure>
+<!-- blank line -->
+
+# High Fidelity trained Reinforcement Learning Model following the path
